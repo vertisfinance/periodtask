@@ -1,0 +1,13 @@
+version: "2"
+
+services:
+  periodtask:
+    build: .
+    image: richardbann/periodtask:1.0.0-alpha
+    command: ["/periodtask/start.py"]
+    volumes:
+      - .:/periodtask
+    environment:
+      LOG_LEVEL: DEBUG
+      SMTP_USERNAME: ${SMTP_USERNAME}
+      SMTP_PASSWORD: ${SMTP_PASSWORD}
