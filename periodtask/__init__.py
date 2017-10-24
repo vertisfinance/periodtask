@@ -1,3 +1,3 @@
-from .task import Task
+from .task import Task, Period
 
-__all__ = (Task,)
+__all__ = (Task, Period)
