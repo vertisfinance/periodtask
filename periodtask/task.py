@@ -1,7 +1,6 @@
 import time
 import logging
 from datetime import datetime
-from subprocess import Popen, PIPE, TimeoutExpired
 import signal
 import threading
 
@@ -9,19 +8,36 @@ import pytz
 from mako.template import Template
 
 from . import mailsender
+from .process_thread import ProcessThread
 
 
 logger = logging.getLogger('periodtask.task')
 
 
 FAILURE_TEMPLATE = """
-task: ${task.name}<br/>
-started for: ${task.process.formatted_sec}<br/>
-returncode: ${task.process.returncode}<br/>
+task: ${subproc.task_name}<br/>
+started for: ${subproc.formatted_sec}<br/>
+returncode: ${subproc.returncode}<br/>
 stdout:<br/>
-<pre>${stdout}</pre>
+<pre>${subproc.stdout}</pre>
 stderr:<br/>
-<pre>${stderr}</pre>
+<pre>${subproc.stderr}</pre>
+"""
+
+SUCCESS_TEMPLATE = """
+task: ${subproc.task_name}<br/>
+started for: ${subproc.formatted_sec}<br/>
+returncode: ${subproc.returncode}<br/>
+stdout:<br/>
+<pre>${subproc.stdout}</pre>
+stderr:<br/>
+<pre>${subproc.stderr}</pre>
+"""
+
+SKIP_TEMPLATE = """
+task running: ${subproc.task_name}<br/>
+started for: ${subproc.formatted_sec}<br/>
+current: ${current_sec}
 """
 
 
@@ -29,24 +45,22 @@ class Period:
     def __init__(
         self,
         timezone='UTC',
-        years=list(range(1900, 3000)),
-        months=list(range(1, 13)),
-        weeks=[],
-        days=list(range(1, 32)),
-        weekdays=list(range(1, 8)),  # Monday: 1, ..., Sunday: 7
-        hours=list(range(0, 24)),
-        minutes=list(range(0, 60, 5)),
         seconds=[0],
+        minutes=list(range(0, 60, 5)),
+        hours=list(range(0, 24)),
+        days=list(range(1, 32)),
+        months=list(range(1, 13)),
+        weekdays=list(range(1, 8)),  # Monday: 1, ..., Sunday: 7
+        years=list(range(1900, 3000)),
     ):
         self.timezone = pytz.timezone(timezone)
-        self.years = years
-        self.months = months
-        self.weeks = weeks
-        self.days = days
-        self.weekdays = weekdays
-        self.hours = hours
-        self.minutes = minutes
         self.seconds = seconds
+        self.minutes = minutes
+        self.hours = hours
+        self.days = days
+        self.months = months
+        self.weekdays = weekdays
+        self.years = years
 
 
 class Task:
@@ -76,11 +90,9 @@ class Task:
         self.recipient_list = recipient_list
 
         self.last_checked = None
-        self.process = None
+        self.process_thread = None
         self.first_check = True
-        self.sec_fmt = (
-            '%s-%s-%s %s:%s:%s (%s) '
-            '(ISO year: %s, week: %s, weekday: %s)')
+        self.sec_fmt = '%s-%s-%s %s:%s:%s (%s) (day of week: %s)'
 
     def check_second(self, sec):
         if self.first_check:
@@ -93,47 +105,39 @@ class Task:
             isocalendar = dt.isocalendar()
 
             year = dt.year
-            iso_year, iso_week, iso_weekday = isocalendar
+            weekday = isocalendar[2]
             month = dt.month
             day = dt.day
             hour = dt.hour
             minute = dt.minute
             second = dt.second
 
-            if all([
-                (
-                    period.weeks and
-                    iso_week in period.weeks and
-                    iso_year in period.years
-                ) or (
-                    not period.weeks and
-                    year in period.years
-                ),
-                iso_weekday in period.weekdays,
-                month in period.months,
-                day in period.days,
-                hour in period.hours,
-                minute in period.minutes,
-                second in period.seconds
-            ]):
+            if (
+                second in period.seconds and
+                minute in period.minutes and
+                hour in period.hours and
+                day in period.days and
+                month in period.months and
+                weekday in period.weekdays and
+                year in period.years
+            ):
                 return self.sec_fmt % (
                     year, month, day, hour, minute, second, period.timezone,
-                    iso_year, iso_week, iso_weekday
+                    weekday
                 )
             return False
 
-    def start_subprocess(self, formatted_sec):
+    def start_process_thread(self, formatted_sec):
         msg = 'task %s starts process for %s' % (self.name, formatted_sec)
         logger.info(msg)
-        self.process = Popen(
+        self.process_thread = ProcessThread(
+            self.name,
             self.command,
-            stdin=PIPE,
-            stdout=PIPE,
-            stderr=PIPE,
-            encoding='utf-8',
-            start_new_session=True,
+            self.stop_signal,
+            self.wait_timeout,
+            formatted_sec
         )
-        self.process.formatted_sec = formatted_sec
+        self.process_thread.start()
 
     def send_mail(self, subject, message, html_message=None):
         if self.from_email and self.recipient_list:
@@ -147,66 +151,59 @@ class Task:
             logger.warning('from_email or recipient_list not set')
 
     def check_subprocess(self):
-        subproc = self.process
+        subproc = self.process_thread
         if not subproc:
             return
-        retcode = subproc.poll()
-        if retcode is None:
+        if subproc.is_alive():
             return
+        retcode = subproc.returncode
         msg = 'task %s started for %s terminated with code %s'
         msg = msg % (self.name, subproc.formatted_sec, retcode)
         logger.info(msg)
 
-        logger.debug('start communicate')
-        stdout_data, stderr_data = subproc.communicate()
-        logger.debug('end communicate')
-
         if retcode == 0:
             if self.mail_success:
                 subject = 'TASK SUCCESS: %s' % self.name
-                self.send_mail(subject, msg)
+                html = Template(SUCCESS_TEMPLATE, default_filters=['h'])
+                html = html.render(subproc=subproc)
+                self.send_mail(subject, msg, html_message=html)
         else:
             if self.mail_failure:
                 subject = 'TASK FAILURE: %s' % self.name
                 html = Template(FAILURE_TEMPLATE, default_filters=['h'])
-                html = html.render(
-                    task=self,
-                    stdout=stdout_data,
-                    stderr=stderr_data,
-                )
+                html = html.render(subproc=subproc)
                 self.send_mail(subject, msg, html_message=html)
 
-        self.process = None
+        self.process_thread = None
 
     def skipped(self, formatted_sec):
         msg = 'task %s skipped for %s' % (self.name, formatted_sec)
         logger.warning(msg)
         if self.mail_skipped:
+            started_for = self.process_thread.formatted_sec
             subject = 'TASK SKIPPED: %s' % self.name
             msg = 'task %s started for %s still running, call for %s skipped'
-            msg = msg % (self.name, self.process.formatted_sec, formatted_sec)
-            self.send_mail(subject, msg)
+            msg = msg % (self.name, started_for, formatted_sec)
+            html = Template(SKIP_TEMPLATE, default_filters=['h'])
+            html = html.render(
+                subproc=self.process_thread,
+                current_sec=formatted_sec
+            )
+            self.send_mail(subject, msg, html_message=html)
 
     def check_for_second(self, sec):
         formatted_sec = self.check_second(sec)
         if not formatted_sec:
             return
-        if self.process:
+        if self.process_thread:
             self.skipped(formatted_sec)
             return
-        self.start_subprocess(formatted_sec)
+        self.start_process_thread(formatted_sec)
 
     def stop(self):
-        if self.process:
-            logger.warning('sending %s to process' % self.stop_signal)
-            self.process.send_signal(self.stop_signal)
-            try:
-                logger.warning('waiting for process to terminate...')
-                self.process.wait(timeout=self.wait_timeout)
-            except TimeoutExpired:
-                logger.warning('killing the process...')
-                self.process.kill()
-                self.process.wait()
+        if self.process_thread:
+            self.process_thread.stop()
+            self.process_thread.join()
             self.check_subprocess()
         for thread in threading.enumerate():
             if thread != threading.main_thread():
@@ -220,7 +217,6 @@ class Task:
         try:
             while True:
                 self.check_subprocess()
-
                 now = int(time.time())
                 for sec in range(self.last_checked + 1, now + 1):
                     self.check_for_second(sec)
