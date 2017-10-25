@@ -1,12 +1,30 @@
 version: "2"
 
 services:
-  periodtask:
+  example:
     build: .
     image: richardbann/periodtask:1.0.0-alpha
     command: ["/periodtask/start.py"]
     volumes:
       - .:/periodtask
+    environment:
+      LOG_LEVEL: ${LOG_LEVEL}
+      SMTP_HOST: ${SMTP_HOST}
+      SMTP_PORT: ${SMTP_PORT}
+      SMTP_TIMEOUT: ${SMTP_TIMEOUT}
+      SMTP_USE_SSL: ${SMTP_USE_SSL}
+      SMTP_USE_TLS: ${SMTP_USE_TLS}
+      SMTP_USERNAME: ${SMTP_USERNAME}
+      SMTP_PASSWORD: ${SMTP_PASSWORD}
+
+  pypi:
+    build:
+      context: .
+      dockerfile: Dockerfile-pypi
+    command: ["/periodtask/start.py"]
+    volumes:
+      - ./start.py:/periodtask/start.py
+      - ./test_script.py:/periodtask/test_script.py
     environment:
       LOG_LEVEL: ${LOG_LEVEL}
       SMTP_HOST: ${SMTP_HOST}
