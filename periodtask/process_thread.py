@@ -16,11 +16,22 @@ class ProcessThread(threading.Thread):
         self.stop_signal = stop_signal
         self.wait_timeout = wait_timeout
         self.formatted_sec = formatted_sec
-        self.stdout = ''
-        self.stderr = ''
+        self.stdout = []
+        self.stderr = []
         self.returncode = None
         self.proc = None
+        self.lock = threading.Lock()
         super(ProcessThread, self).__init__()
+
+    @property
+    def stdout_lines(self):
+        with self.lock:
+            return ''.join(self.stdout)
+
+    @property
+    def stderr_lines(self):
+        with self.lock:
+            return ''.join(self.stderr)
 
     def run(self):
         proc = self.proc = Popen(
@@ -37,17 +48,19 @@ class ProcessThread(threading.Thread):
         while stdout_live or stderr_live:
             r, w, e = select.select([proc.stdout, proc.stderr], [], [])
             if proc.stdout in r:
-                data = proc.stdout.read()
+                data = proc.stdout.readlines()
                 if not data:
                     stdout_live = False
                 else:
-                    self.stdout += data
+                    with self.lock:
+                        self.stdout += data
             if proc.stderr in r:
-                data = proc.stderr.read()
+                data = proc.stderr.readlines()
                 if not data:
                     stderr_live = False
                 else:
-                    self.stderr += data
+                    with self.lock:
+                        self.stderr += data
 
         proc.wait()
         self.returncode = proc.returncode

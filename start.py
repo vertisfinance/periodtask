@@ -26,8 +26,8 @@ task = Task(
         )
     ],
     mail_failure=True,
-    mail_success=True,
-    mail_skipped=True,
+    # mail_success=True,
+    # mail_skipped=True,
     run_on_start=True,
     wait_timeout=5,
     stop_signal=signal.SIGINT,

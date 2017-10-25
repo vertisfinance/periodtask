@@ -19,9 +19,13 @@ task: ${subproc.task_name}<br/>
 started for: ${subproc.formatted_sec}<br/>
 returncode: ${subproc.returncode}<br/>
 stdout:<br/>
-<pre>${subproc.stdout}</pre>
+<pre>
+${subproc.stdout_lines}
+</pre>
 stderr:<br/>
-<pre>${subproc.stderr}</pre>
+<pre>
+${subproc.stderr_lines}
+</pre>
 """
 
 SUCCESS_TEMPLATE = """
@@ -29,15 +33,27 @@ task: ${subproc.task_name}<br/>
 started for: ${subproc.formatted_sec}<br/>
 returncode: ${subproc.returncode}<br/>
 stdout:<br/>
-<pre>${subproc.stdout}</pre>
+<pre>
+${subproc.stdout_lines}
+</pre>
 stderr:<br/>
-<pre>${subproc.stderr}</pre>
+<pre>
+${subproc.stderr_lines}
+</pre>
 """
 
 SKIP_TEMPLATE = """
 task running: ${subproc.task_name}<br/>
 started for: ${subproc.formatted_sec}<br/>
 current: ${current_sec}
+stdout:<br/>
+<pre>
+${subproc.stdout_lines}
+</pre>
+stderr:<br/>
+<pre>
+${subproc.stderr_lines}
+</pre>
 """
 
 
