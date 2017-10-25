@@ -1,0 +1,31 @@
+periodtask
+==========
+
+Periodic task with timezone
+
+.. code-block:: python
+
+  from periodtask import Task, Period, send_mail
+
+
+  task = Task(
+      name='test',
+      command=('/periodtask/test_script.py',),
+      periods=[
+          Period(
+              timezone='Europe/Budapest',
+              minutes=list(range(0, 60)),
+              seconds=list(range(0, 60, 5)),
+          )
+      ],
+      run_on_start=True,
+      mail_failure=True,
+      mail_success=True,
+      mail_skipped=True,
+      wait_timeout=5,
+      stop_signal=signal.SIGINT,
+      send_mail_func=send_mail,
+      from_email='richardbann@gmail.com',
+      recipient_list=['richard.bann@vertis.com']
+  )
+  task.start()
