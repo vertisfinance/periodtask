@@ -2,5 +2,6 @@
 import time
 
 print('helló árvíztűrő tükörfúrógép')
-
-time.sleep(10)
+for i in range(20):
+    print(i)
+    time.sleep(1)

@@ -4,7 +4,7 @@ import sys
 import os
 import signal
 
-from periodtask import Task, Period
+from periodtask import Task, parse_cron
 
 
 stdout = logging.StreamHandler(sys.stdout)
@@ -18,18 +18,13 @@ root.setLevel(getattr(logging, os.environ.get('LOG_LEVEL', 'DEBUG')))
 task = Task(
     'test',
     ('/periodtask/test_script.py',),
-    [
-        Period(
-            timezone='Europe/Budapest',
-            minutes=list(range(0, 60)),
-            seconds=list(range(0, 60, 5)),
-        )
-    ],
-    mail_failure=True,
-    # mail_success=True,
-    # mail_skipped=True,
+    [parse_cron('* * * * * Europe/Budapest * */5')],
     run_on_start=True,
+    mail_failure=True,
+    mail_success=False,
+    mail_skipped=False,
     wait_timeout=5,
+    max_lines=3,
     stop_signal=signal.SIGINT,
     from_email='richardbann@gmail.com',
     recipient_list=['richard.bann@vertis.com']

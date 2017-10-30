@@ -57,28 +57,6 @@ ${subproc.stderr_lines}
 """
 
 
-class Period:
-    def __init__(
-        self,
-        timezone='UTC',
-        seconds=[0],
-        minutes=list(range(0, 60, 5)),
-        hours=list(range(0, 24)),
-        days=list(range(1, 32)),
-        months=list(range(1, 13)),
-        weekdays=list(range(1, 8)),  # Monday: 1, ..., Sunday: 7
-        years=list(range(1900, 3000)),
-    ):
-        self.timezone = pytz.timezone(timezone)
-        self.seconds = seconds
-        self.minutes = minutes
-        self.hours = hours
-        self.days = days
-        self.months = months
-        self.weekdays = weekdays
-        self.years = years
-
-
 class Task:
     def __init__(
         self, name, command, periods,
@@ -86,6 +64,7 @@ class Task:
         mail_success=False,
         mail_failure=False,
         mail_skipped=False,
+        max_lines=50,
         stop_signal=signal.SIGTERM,
         wait_timeout=10,
         send_mail_func=mailsender.send_mail,
@@ -99,6 +78,7 @@ class Task:
         self.mail_success = mail_success
         self.mail_failure = mail_failure
         self.mail_skipped = mail_skipped
+        self.max_lines = max_lines
         self.stop_signal = stop_signal
         self.wait_timeout = wait_timeout
         self.send_mail_func = send_mail_func
@@ -151,7 +131,8 @@ class Task:
             self.command,
             self.stop_signal,
             self.wait_timeout,
-            formatted_sec
+            formatted_sec,
+            self.max_lines
         )
         self.process_thread.start()
 
