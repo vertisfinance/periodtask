@@ -7,7 +7,6 @@ import threading
 import pytz
 from mako.template import Template
 
-from . import mailsender
 from .process_thread import ProcessThread
 
 
@@ -67,9 +66,7 @@ class Task:
         max_lines=50,
         stop_signal=signal.SIGTERM,
         wait_timeout=10,
-        send_mail_func=mailsender.send_mail,
-        from_email=None,
-        recipient_list=None,
+        send_mail_func=None,
     ):
         self.name = name
         self.command = command
@@ -82,8 +79,6 @@ class Task:
         self.stop_signal = stop_signal
         self.wait_timeout = wait_timeout
         self.send_mail_func = send_mail_func
-        self.from_email = from_email
-        self.recipient_list = recipient_list
 
         self.last_checked = None
         self.process_thread = None
@@ -137,15 +132,11 @@ class Task:
         self.process_thread.start()
 
     def send_mail(self, subject, message, html_message=None):
-        if self.from_email and self.recipient_list:
+        if callable(self.send_mail_func):
             self.send_mail_func(
-                subject, message,
-                from_email=self.from_email,
-                recipient_list=self.recipient_list,
-                html_message=html_message
-            )
+                subject, message, html_message=html_message)
         else:
-            logger.warning('from_email or recipient_list not set')
+            logger.warning('task.send_mail_func is not callable')
 
     def check_subprocess(self):
         subproc = self.process_thread

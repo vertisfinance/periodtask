@@ -12,7 +12,7 @@ setup(
     name='periodtask',
     description='Periodic task with timezone',
     long_description=long_description,
-    version='0.1.1',
+    version='0.2.0',
     url='https://github.com/vertisfinance/periodtask',
     author='Richard Bann',
     author_email='richard.bann@vertis.com',
