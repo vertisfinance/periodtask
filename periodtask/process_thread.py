@@ -67,7 +67,6 @@ class ProcessThread(threading.Thread):
                     if len(head) > 2 * self.max_lines:
                         tail.extend(head[-self.max_lines:])
                         del head[self.max_lines:]
-            print(head, tail)
             return True
 
     def run(self):
