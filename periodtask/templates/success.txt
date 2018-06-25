@@ -1,0 +1,7 @@
+STDOUT
+------
+${subproc.stdout_lines}
+
+STDERR
+------
+${subproc.stderr_lines}

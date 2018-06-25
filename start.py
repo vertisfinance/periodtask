@@ -4,7 +4,7 @@ import sys
 import os
 import signal
 
-from periodtask import Task, parse_cron, send_mail
+from periodtask import Task, parse_cron, send_mail, DELAY
 
 
 stdout = logging.StreamHandler(sys.stdout)
@@ -31,10 +31,12 @@ task = Task(
     run_on_start=False,
     mail_failure=True,
     mail_success=True,
-    mail_skipped=False,
+    mail_skipped=True,
+    mail_delayed=True,
     send_mail_func=_send_mail,
     wait_timeout=5,
     max_lines=3,
     stop_signal=signal.SIGINT,
+    policy=DELAY
 )
 task.start()

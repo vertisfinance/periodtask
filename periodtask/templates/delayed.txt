@@ -1,0 +1,20 @@
+TASKS STILL RUNNING
+-------------------
+% for task in running:
+${task.formatted_sec}
+
+STDOUT
+------
+${task.stdout_lines}
+
+STDERR
+------
+${task.stderr_lines}
+
+% endfor
+
+TASKS WAITING
+-------------
+% for task_sec in delay_queue:
+    ${task_sec}
+% endfor

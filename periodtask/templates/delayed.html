@@ -1,0 +1,22 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <title>!!! PERIODIC TASK ${task_name} DELAYED - ${current_sec}</title>
+  </head>
+  <body>
+    <h1>TASKS STILL RUNNING</h1>
+% for task in running:
+    <h2>${task.formatted_sec}</h2>
+    <h3>STDOUT</h3>
+    <pre>${task.stdout_lines}</pre>
+    <h3>STDERR</h3>
+    <pre>${task.stderr_lines}</pre>
+% endfor
+    <h1>TASKS WAITING</h1>
+% for task_sec in delay_queue:
+    <h2>${task_sec}</h2>
+% endfor
+  </body>
+</html>
