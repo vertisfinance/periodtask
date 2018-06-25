@@ -6,7 +6,7 @@ import smtplib
 import logging
 
 
-logger = logging.getLogger('mailsender')
+logger = logging.getLogger('periodtask.mailsender')
 
 
 SMTP_HOST = os.environ.get('SMTP_HOST')

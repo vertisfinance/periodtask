@@ -1,5 +1,13 @@
 version: "2"
 
+networks:
+  default:
+    ipam:
+      driver: default
+      config:
+        - subnet: ${NETWORK_SUBNET}
+          gateway: ${NETWORK_GATEWAY}
+
 services:
   example:
     build: .
@@ -15,7 +23,7 @@ services:
       SMTP_USE_SSL: ${SMTP_USE_SSL}
       SMTP_USE_TLS: ${SMTP_USE_TLS}
       SMTP_USERNAME: ${SMTP_USERNAME}
-      SMTP_PASSWORD: ${SMTP_PASSWORD}
+      # SMTP_PASSWORD: ${SMTP_PASSWORD}
 
   pypi:
     build:
@@ -33,4 +41,4 @@ services:
       SMTP_USE_SSL: ${SMTP_USE_SSL}
       SMTP_USE_TLS: ${SMTP_USE_TLS}
       SMTP_USERNAME: ${SMTP_USERNAME}
-      SMTP_PASSWORD: ${SMTP_PASSWORD}
+      # SMTP_PASSWORD: ${SMTP_PASSWORD}

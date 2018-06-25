@@ -31,14 +31,18 @@ SUCCESS_TEMPLATE = """
 task: ${subproc.task_name}<br/>
 started for: ${subproc.formatted_sec}<br/>
 returncode: ${subproc.returncode}<br/>
-stdout:<br/>
+<div style="padding: 5px; background-color: #fafafa">
+<h4>STDOUT</h4>
 <pre>
 ${subproc.stdout_lines}
 </pre>
-stderr:<br/>
+</div>
+<div style="padding: 5px; background-color: #fafafa">
+<h4>STDERR</h4>
 <pre>
 ${subproc.stderr_lines}
 </pre>
+</div>
 """
 
 SKIP_TEMPLATE = """
@@ -63,10 +67,10 @@ class Task:
         mail_success=False,
         mail_failure=False,
         mail_skipped=False,
+        send_mail_func=None,
+        wait_timeout=10,
         max_lines=50,
         stop_signal=signal.SIGTERM,
-        wait_timeout=10,
-        send_mail_func=None,
     ):
         self.name = name
         self.command = command
@@ -83,7 +87,9 @@ class Task:
         self.last_checked = None
         self.process_thread = None
         self.first_check = True
-        self.sec_fmt = '%s-%s-%s %s:%s:%s (%s) (day of week: %s)'
+        self.sec_fmt = (
+            '{:4}-{:0>2}-{:0>2} {:0>2}:{:0>2}:{:0>2} ({}) (day of week: {})'
+        )
 
     def check_second(self, sec):
         if self.first_check:
@@ -112,7 +118,7 @@ class Task:
                 weekday in period.weekdays and
                 year in period.years
             ):
-                return self.sec_fmt % (
+                return self.sec_fmt.format(
                     year, month, day, hour, minute, second, period.timezone,
                     weekday
                 )

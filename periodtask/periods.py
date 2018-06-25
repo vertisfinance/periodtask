@@ -82,7 +82,7 @@ def _to_list(fmt, low, high, inner=False):
     try:
         fmt = fmt.strip()
         fmt = int(fmt)
-    except:
+    except ValueError:
         pass
 
     if fmt == '':
@@ -122,7 +122,7 @@ def _to_list(fmt, low, high, inner=False):
             step = 1
         try:
             step = int(step)
-        except:
+        except ValueError:
             desc = 'step should be an integer (%s)' % fmt
             raise BadCronFormat(desc)
 
@@ -134,7 +134,7 @@ def _to_list(fmt, low, high, inner=False):
             raise BadCronFormat('invalid range (%s)' % fmt)
         try:
             a, b = int(splitted[0]), int(splitted[1])
-        except:
+        except ValueError:
             raise BadCronFormat('invalid range (%s)' % fmt)
 
         a = low if a < low else a

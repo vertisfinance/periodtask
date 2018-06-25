@@ -18,19 +18,19 @@ root.setLevel(getattr(logging, os.environ.get('LOG_LEVEL', 'DEBUG')))
 def _send_mail(subject, message, html_message=None):
     return send_mail(
         subject, message,
-        from_email='richardbann@gmail.com',
+        from_email='richard.bann@vertis.com',
         recipient_list=['richard.bann@vertis.com'],
         html_message=html_message
     )
 
 
 task = Task(
-    'test',
-    ('/periodtask/test_script.py',),
-    [parse_cron('* * * * * Europe/Budapest * */5')],
-    run_on_start=True,
+    name='test',
+    command=('/periodtask/test_script.py',),
+    periods=[parse_cron('* * * * * Europe/Budapest * */30')],
+    run_on_start=False,
     mail_failure=True,
-    mail_success=False,
+    mail_success=True,
     mail_skipped=False,
     send_mail_func=_send_mail,
     wait_timeout=5,
