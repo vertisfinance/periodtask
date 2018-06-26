@@ -1,14 +1,17 @@
-TASKS STILL RUNNING
--------------------
-% for task in running:
-${task.formatted_sec}
+Process still running and policy is SKIP.
 
+% for task in running:
+Started for: ${task.formatted_sec}
+
+% if task.stdout_lines:
 STDOUT
 ------
 ${task.stdout_lines}
+% endif
 
+% if task.stderr_lines:
 STDERR
 ------
 ${task.stderr_lines}
-
+% endif
 % endfor

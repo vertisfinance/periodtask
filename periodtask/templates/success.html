@@ -3,12 +3,17 @@
   <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-    <title>PERIODIC TASK ${subproc.task_name} SUCCESS (${subproc.formatted_sec})</title>
+    <title>${subproc.task_name} COMPLETED - ${subproc.formatted_sec}</title>
   </head>
   <body>
-    <h3>STDOUT</h3>
+    Command <code style="background-color: #f0f0f0">${' '.join(subproc.command)}</code> returned with code ${subproc.returncode}.
+    % if subproc.stdout_lines:
+    <h4 style="border-bottom: 1px solid black">STDOUT</h4>
     <pre>${subproc.stdout_lines}</pre>
-    <h3>STDERR</h3>
+    % endif
+    % if subproc.stderr_lines:
+    <h4 style="border-bottom: 1px solid black">STDERR</h4>
     <pre>${subproc.stderr_lines}</pre>
+    % endif
   </body>
 </html>

@@ -3,16 +3,20 @@
   <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-    <title>!!! PERIODIC TASK ${task_name} SKIPPED - ${current_sec}</title>
+    <title>!!! ${task_name} SKIPPED - ${current_sec}</title>
   </head>
   <body>
-    <h1>TASKS STILL RUNNING</h1>
-% for task in running:
-    <h2>${task.formatted_sec}</h2>
-    <h3>STDOUT</h3>
+    Process still running and policy is SKIP.
+    % for task in running:
+    <h4 style="background-color: #f0f0f0">Started for: ${task.formatted_sec}</h4>
+    % if task.stdout_lines:
+    <h4 style="border-bottom: 1px solid black">STDOUT</h4>
     <pre>${task.stdout_lines}</pre>
-    <h3>STDERR</h3>
+    % endif
+    % if task.stderr_lines:
+    <h4 style="border-bottom: 1px solid black">STDERR</h4>
     <pre>${task.stderr_lines}</pre>
-% endfor
+    % endif
+    % endfor
   </body>
 </html>

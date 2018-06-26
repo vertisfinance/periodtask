@@ -1,20 +1,23 @@
-TASKS STILL RUNNING
--------------------
-% for task in running:
-${task.formatted_sec}
+Process(es) still running and policy is DELAY.
 
+% for task in running:
+Started for: ${task.formatted_sec}
+
+% if task.stdout_lines:
 STDOUT
 ------
 ${task.stdout_lines}
+% endif
 
+% if task.stderr_lines:
 STDERR
 ------
 ${task.stderr_lines}
-
+% endif
 % endfor
 
-TASKS WAITING
--------------
+Tasks waiting in the queue:
+---------------------------
 % for task_sec in delay_queue:
-    ${task_sec}
+- ${task_sec}
 % endfor

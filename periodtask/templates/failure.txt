@@ -1,7 +1,13 @@
+Command {' '.join(subproc.command)} returned with code ${subproc.returncode}.
+
+% if subproc.stdout_lines:
 STDOUT
 ------
 ${subproc.stdout_lines}
+% endif
 
+% if subproc.stderr_lines:
 STDERR
 ------
 ${subproc.stderr_lines}
+% endif

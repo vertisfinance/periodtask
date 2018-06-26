@@ -1,1 +1,1 @@
-!!! PERIODIC TASK ${task_name} SKIPPED - ${current_sec}
+!!! ${task_name} SKIPPED - ${current_sec}
