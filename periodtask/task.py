@@ -1,8 +1,6 @@
-import time
 import logging
 from datetime import datetime
 import signal
-import threading
 import os
 
 import pytz
@@ -51,7 +49,6 @@ class Task:
             directories=[template_dir], default_filters=['h']
         )
 
-        self.last_checked = None
         self.process_threads = []
         self.first_check = True
         self.sec_fmt = (
@@ -197,22 +194,4 @@ class Task:
                 proc.stop()
                 proc.join()
             self.check_subprocesses()
-        for thread in threading.enumerate():
-            if thread != threading.main_thread():
-                thread.join()
-
         logger.info('task stopped: %s' % self.name)
-
-    def start(self):
-        logger.info('task started: %s' % self.name)
-        self.last_checked = int(time.time()) - 1
-        try:
-            while True:
-                self.check_subprocesses()
-                now = int(time.time())
-                for sec in range(self.last_checked + 1, now + 1):
-                    self.check_for_second(sec)
-                self.last_checked = now
-                time.sleep(1)
-        except KeyboardInterrupt:
-            self.stop()
