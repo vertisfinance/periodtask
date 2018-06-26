@@ -58,15 +58,20 @@ class ProcessThread(threading.Thread):
             data = data.rstrip('\r\n')
             logger.info(data)
             with self.lock:
-                if tail:
-                    tail.append(data)
-                    if len(tail) > self.max_lines:
-                        tail.pop(0)
-                else:
+                if self.max_lines is None:
                     head.append(data)
-                    if len(head) > 2 * self.max_lines:
-                        tail.extend(head[-self.max_lines:])
-                        del head[self.max_lines:]
+                elif self.max_lines == 0:
+                    return True
+                else:
+                    if tail:
+                        tail.append(data)
+                        if len(tail) > self.max_lines:
+                            tail.pop(0)
+                    else:
+                        head.append(data)
+                        if len(head) > 2 * self.max_lines:
+                            tail.extend(head[-self.max_lines:])
+                            del head[self.max_lines:]
             return True
 
     def run(self):
