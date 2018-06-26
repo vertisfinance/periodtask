@@ -1,23 +1,23 @@
 Process(es) still running and policy is DELAY.
 
 % for task in running:
-Started for: ${task.formatted_sec}
+Started for: ${task.formatted_sec | n}
 
 % if task.stdout_lines:
 STDOUT
 ------
-${task.stdout_lines}
+${task.stdout_lines | n}
 % endif
 
 % if task.stderr_lines:
 STDERR
 ------
-${task.stderr_lines}
+${task.stderr_lines | n}
 % endif
 % endfor
 
 Tasks waiting in the queue:
 ---------------------------
 % for task_sec in delay_queue:
-- ${task_sec}
+- ${task_sec | n}
 % endfor

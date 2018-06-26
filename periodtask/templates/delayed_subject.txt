@@ -1,1 +1,1 @@
-!!! ${task_name} DELAYED - ${current_sec}
+!!! ${task_name | n} DELAYED - ${current_sec | n}

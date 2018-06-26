@@ -1,1 +1,1 @@
-!!! ${subproc.task_name} FAILURE - ${subproc.formatted_sec}
+!!! ${subproc.task_name | n} FAILURE - ${subproc.formatted_sec | n}

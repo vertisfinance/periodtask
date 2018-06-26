@@ -1,1 +1,1 @@
-!!! ${task_name} SKIPPED - ${current_sec}
+!!! ${task_name | n} SKIPPED - ${current_sec | n}

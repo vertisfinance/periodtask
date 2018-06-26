@@ -1,13 +1,13 @@
-Command ${' '.join(subproc.command)} returned with code ${subproc.returncode}.
+Command ${' '.join(subproc.command) | n} returned with code ${subproc.returncode | n,str}.
 
 % if subproc.stdout_lines:
 STDOUT
 ------
-${subproc.stdout_lines}
+${subproc.stdout_lines | n}
 % endif
 
 % if subproc.stderr_lines:
 STDERR
 ------
-${subproc.stderr_lines}
+${subproc.stderr_lines | n}
 % endif

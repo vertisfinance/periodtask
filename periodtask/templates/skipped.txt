@@ -1,17 +1,17 @@
 Process still running and policy is SKIP.
 
 % for task in running:
-Started for: ${task.formatted_sec}
+Started for: ${task.formatted_sec | n}
 
 % if task.stdout_lines:
 STDOUT
 ------
-${task.stdout_lines}
+${task.stdout_lines | n}
 % endif
 
 % if task.stderr_lines:
 STDERR
 ------
-${task.stderr_lines}
+${task.stderr_lines | n}
 % endif
 % endfor
