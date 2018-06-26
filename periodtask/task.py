@@ -91,7 +91,7 @@ class Task:
                     year, month, day, hour, minute, second, period.timezone,
                     weekday
                 )
-            return False
+        return False
 
     def start_process_thread(self, formatted_sec):
         msg = 'task %s starts process for %s' % (self.name, formatted_sec)

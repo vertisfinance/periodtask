@@ -4,7 +4,7 @@ import sys
 import os
 import signal
 
-from periodtask import TaskList, Task, send_mail, DELAY, Period
+from periodtask import TaskList, Task, send_mail, DELAY
 
 
 stdout = logging.StreamHandler(sys.stdout)
@@ -28,7 +28,10 @@ tasklist = TaskList(
     Task(
         name='test',
         command=('/periodtask/test_script.py',),
-        periods='* * * * * Europe/Budapest * */30',
+        periods=[
+            '*   * * * * Europe/Budapest * */30',
+            '*/2 * * * * UTC * 19',
+        ],
         run_on_start=False,
         mail_failure=True,
         mail_success=True,
@@ -43,8 +46,8 @@ tasklist = TaskList(
     Task(
         name='ls_dev',
         command=('ls', '-al'),
-        # periods='0 * * * *',
-        periods=Period(),
+        periods='0 * * * *',
+        # periods=Period(),
         # run_on_start=True,
         mail_failure=True,
         mail_success=True,
