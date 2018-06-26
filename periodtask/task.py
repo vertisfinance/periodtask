@@ -7,6 +7,7 @@ import pytz
 from mako.lookup import TemplateLookup
 
 from .process_thread import ProcessThread
+from .periods import parse_period
 
 
 logger = logging.getLogger('periodtask.task')
@@ -32,9 +33,12 @@ class Task:
         policy=SKIP,
         template_dir=template_dir
     ):
+        if not isinstance(periods, list) and not isinstance(periods, tuple):
+            periods = [periods]
+        self.periods = [parse_period(x) for x in periods]
+
         self.name = name
         self.command = command
-        self.periods = periods
         self.run_on_start = run_on_start
         self.mail_success = mail_success
         self.mail_failure = mail_failure

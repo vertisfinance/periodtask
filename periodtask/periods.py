@@ -6,6 +6,10 @@ import pytz
 logger = logging.getLogger('periodtask.periods')
 
 
+class BadPeriodDef(Exception):
+    pass
+
+
 class BadCronFormat(Exception):
     pass
 
@@ -42,6 +46,14 @@ class Period:
             'years: %s' % self.years,
             'seconds: %s' % self.seconds,
         ])
+
+
+def parse_period(p):
+    if isinstance(p, Period):
+        return p
+    if isinstance(p, str):
+        return parse_cron(p)
+    raise BadPeriodDef(p)
 
 
 def parse_cron(cron_string):
