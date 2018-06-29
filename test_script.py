@@ -7,6 +7,6 @@ A super simple script to run.
 import time
 
 print('helló árvíztűrő tükörfúrógép')
-for i in range(4):
+for i in range(20):
     print(i)
     time.sleep(1)
