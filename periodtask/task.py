@@ -31,7 +31,11 @@ class Task:
         max_lines=50,
         stop_signal=signal.SIGTERM,
         policy=SKIP,
-        template_dir=template_dir
+        template_dir=template_dir,
+        stdout_logger=logging.getLogger('periodtask.stdout'),
+        stdout_level=logging.INFO,
+        stderr_logger=logging.getLogger('periodtask.stderr'),
+        stderr_level=logging.INFO,
     ):
         if not isinstance(periods, list) and not isinstance(periods, tuple):
             periods = [periods]
@@ -52,6 +56,10 @@ class Task:
         self.template_lookup = TemplateLookup(
             directories=[template_dir], default_filters=['h']
         )
+        self.stdout_logger = stdout_logger
+        self.stdout_level = stdout_level
+        self.stderr_logger = stderr_logger
+        self.stderr_level = stderr_level
 
         self.process_threads = []
         self.first_check = True
@@ -102,7 +110,11 @@ class Task:
             self.stop_signal,
             self.wait_timeout,
             formatted_sec,
-            self.max_lines
+            self.max_lines,
+            self.stdout_logger,
+            self.stdout_level,
+            self.stderr_logger,
+            self.stderr_level
         )
         self.process_threads.append(thrd)
         thrd.start()

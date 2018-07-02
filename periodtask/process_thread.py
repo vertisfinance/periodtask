@@ -5,14 +5,13 @@ import logging
 
 
 logger = logging.getLogger('periodtask.process_thread')
-logger_stdout = logging.getLogger('periodtask.stdout')
-logger_stderr = logging.getLogger('periodtask.stderr')
 
 
 class ProcessThread(threading.Thread):
     def __init__(
-        self, task_name, command, stop_signal, wait_timeout, formatted_sec,
-        max_lines
+        self, task_name, command, stop_signal, wait_timeout,
+        formatted_sec, max_lines,
+        stdout_logger, stdout_level, stderr_logger, stderr_level
     ):
         self.task_name = task_name
         self.command = command
@@ -20,6 +19,10 @@ class ProcessThread(threading.Thread):
         self.wait_timeout = wait_timeout
         self.formatted_sec = formatted_sec
         self.max_lines = max_lines
+        self.stdout_logger = stdout_logger
+        self.stdout_level = stdout_level or logging.INFO
+        self.stderr_logger = stderr_logger
+        self.stderr_level = stderr_level or logging.INFO
 
         self.stdout_head = []
         self.stdout_tail = []
@@ -50,13 +53,14 @@ class ProcessThread(threading.Thread):
     def stderr_lines(self):
         return self.lines(self.stderr_head, self.stderr_tail)
 
-    def read_descriptor(self, desc, head, tail, logger):
+    def read_descriptor(self, desc, head, tail, logger, level):
         data = desc.readline()
         if not data:
             return False
         else:
             data = data.rstrip('\r\n')
-            logger.info(data)
+            if logger:
+                logger.log(level, data)
             with self.lock:
                 if self.max_lines is None:
                     head.append(data)
@@ -92,12 +96,14 @@ class ProcessThread(threading.Thread):
                 stdout_live = self.read_descriptor(
                     proc.stdout,
                     self.stdout_head, self.stdout_tail,
-                    logger_stdout)
+                    self.stdout_logger, self.stdout_level
+                )
             if proc.stderr in r:
                 stderr_live = self.read_descriptor(
                     proc.stderr,
                     self.stderr_head, self.stderr_tail,
-                    logger_stderr)
+                    self.stdout_logger, self.stdout_level
+                )
 
         proc.wait()
         self.returncode = proc.returncode
