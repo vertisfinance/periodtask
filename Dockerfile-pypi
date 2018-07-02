@@ -2,7 +2,7 @@ FROM alpine:3.6
 
 RUN apk --update add python3 bash
 
-RUN pip3 install --no-cache periodtask==0.4.1
+RUN pip3 install --no-cache periodtask==0.4.2
 
 STOPSIGNAL SIGINT
 ENV PYTHONUNBUFFERED 1
