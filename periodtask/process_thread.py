@@ -11,7 +11,8 @@ class ProcessThread(threading.Thread):
     def __init__(
         self, task_name, command, stop_signal, wait_timeout,
         formatted_sec, max_lines,
-        stdout_logger, stdout_level, stderr_logger, stderr_level
+        stdout_logger, stdout_level, stderr_logger, stderr_level,
+        cwd
     ):
         self.task_name = task_name
         self.command = command
@@ -23,6 +24,7 @@ class ProcessThread(threading.Thread):
         self.stdout_level = stdout_level or logging.INFO
         self.stderr_logger = stderr_logger
         self.stderr_level = stderr_level or logging.INFO
+        self.cwd = cwd
 
         self.stdout_head = []
         self.stdout_tail = []
@@ -86,7 +88,8 @@ class ProcessThread(threading.Thread):
             stderr=PIPE,
             encoding='utf-8',
             start_new_session=True,
-            bufsize=1
+            bufsize=1,
+            cwd=self.cwd,
         )
 
         stdout_live, stderr_live = True, True

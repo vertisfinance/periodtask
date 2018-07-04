@@ -36,6 +36,7 @@ class Task:
         stdout_level=logging.INFO,
         stderr_logger=logging.getLogger('periodtask.stderr'),
         stderr_level=logging.INFO,
+        cwd=None,
     ):
         if not isinstance(periods, list) and not isinstance(periods, tuple):
             periods = [periods]
@@ -60,6 +61,7 @@ class Task:
         self.stdout_level = stdout_level
         self.stderr_logger = stderr_logger
         self.stderr_level = stderr_level
+        self.cwd = cwd
 
         self.process_threads = []
         self.first_check = True
@@ -114,7 +116,8 @@ class Task:
             self.stdout_logger,
             self.stdout_level,
             self.stderr_logger,
-            self.stderr_level
+            self.stderr_level,
+            self.cwd,
         )
         self.process_threads.append(thrd)
         thrd.start()
