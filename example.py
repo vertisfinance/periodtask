@@ -3,7 +3,7 @@
 import logging
 import os
 
-from periodtask import TaskList, Task
+from periodtask import TaskList, Task, Period
 from periodtask.mailsender import MailSender
 
 
@@ -18,7 +18,7 @@ send_success = MailSender(
 
 tasks = TaskList(
     Task(
-        name='test',
+        name='ls',
         command=('ls', '-al'),
         periods='* * * * * Europe/Budapest * 0',
         run_on_start=True,
@@ -26,10 +26,21 @@ tasks = TaskList(
         send_mail_func=send_success,
     ),
     Task(
-        name='test',
+        name='cat',
         command=('cat', 'README.rst'),
-        periods='* * * * * Europe/Budapest * 0',
-        run_on_start=True,
+        periods=(
+            '* * * * * Europe/Budapest * 0',
+            Period(
+                minutes=list(range(0, 60, 5)),
+                hours=list(range(0, 24)),
+                days=list(range(1, 32)),
+                months=list(range(1, 13)),
+                weekdays=list(range(1, 8)),  # Monday: 1, ..., Sunday: 7
+                timezone='UTC',
+                years=list(range(1900, 3000)),
+                seconds=[0],
+            )
+        ),
         mail_success=send_success,
     )
 )

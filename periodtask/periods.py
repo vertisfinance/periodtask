@@ -17,14 +17,14 @@ class BadCronFormat(Exception):
 class Period:
     def __init__(
         self,
-        minutes=list(range(0, 60, 5)),
-        hours=list(range(0, 24)),
-        days=list(range(1, 32)),
-        months=list(range(1, 13)),
-        weekdays=list(range(1, 8)),  # Monday: 1, ..., Sunday: 7
+        minutes=set(range(0, 60, 5)),
+        hours=set(range(0, 24)),
+        days=set(range(1, 32)),
+        months=set(range(1, 13)),
+        weekdays=set(range(1, 8)),  # Monday: 1, ..., Sunday: 7
         timezone='UTC',
-        years=list(range(1900, 3000)),
-        seconds=[0],
+        years=set(range(1900, 3000)),
+        seconds=set([0]),
     ):
         self.minutes = minutes
         self.hours = hours
