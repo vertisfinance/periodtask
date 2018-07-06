@@ -5,6 +5,8 @@ Periodic task with timezone
 
 .. image:: https://travis-ci.org/vertisfinance/periodtask.svg?branch=master
     :target: https://travis-ci.org/vertisfinance/periodtask
+.. image:: https://coveralls.io/repos/github/vertisfinance/periodtask/badge.svg?branch=master
+:target: https://coveralls.io/github/vertisfinance/periodtask?branch=master
 
 .. code-block:: python
 
