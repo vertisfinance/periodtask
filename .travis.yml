@@ -8,3 +8,8 @@ install:
 
 script:
   - python -m unittest
+
+after_success:
+  - pip install coveralls
+  - coverage run --source periodtask -m unittest
+  - coveralls
