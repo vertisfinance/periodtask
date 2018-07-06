@@ -3,6 +3,9 @@ periodtask
 
 Periodic task with timezone
 
+.. image:: https://travis-ci.org/vertisfinance/periodtask.svg?branch=master
+    :target: https://travis-ci.org/vertisfinance/periodtask
+
 .. code-block:: python
 
   from periodtask import Task, TaskList, Period, send_mail
