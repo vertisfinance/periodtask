@@ -1,44 +1,9 @@
-version: "2"
-
-networks:
-  default:
-    ipam:
-      driver: default
-      config:
-        - subnet: ${NETWORK_SUBNET}
-          gateway: ${NETWORK_GATEWAY}
+version: "3.6"
 
 services:
-  example:
+  periodtask:
+    image: periodtask
     build: .
-    image: richardbann/periodtask:1.0.0-alpha
-    command: ["/periodtask/start.py"]
     volumes:
-      - .:/periodtask
-    environment:
-      LOG_LEVEL: ${LOG_LEVEL}
-      SMTP_HOST: ${SMTP_HOST}
-      SMTP_PORT: ${SMTP_PORT}
-      SMTP_TIMEOUT: ${SMTP_TIMEOUT}
-      SMTP_USE_SSL: ${SMTP_USE_SSL}
-      SMTP_USE_TLS: ${SMTP_USE_TLS}
-      SMTP_USERNAME: ${SMTP_USERNAME}
-      # SMTP_PASSWORD: ${SMTP_PASSWORD}
-
-  pypi:
-    build:
-      context: .
-      dockerfile: Dockerfile-pypi
-    command: ["/periodtask/start.py"]
-    volumes:
-      - ./start.py:/periodtask/start.py
-      - ./test_script.py:/periodtask/test_script.py
-    environment:
-      LOG_LEVEL: ${LOG_LEVEL}
-      SMTP_HOST: ${SMTP_HOST}
-      SMTP_PORT: ${SMTP_PORT}
-      SMTP_TIMEOUT: ${SMTP_TIMEOUT}
-      SMTP_USE_SSL: ${SMTP_USE_SSL}
-      SMTP_USE_TLS: ${SMTP_USE_TLS}
-      SMTP_USERNAME: ${SMTP_USERNAME}
-      # SMTP_PASSWORD: ${SMTP_PASSWORD}
+      - ".:/periodtask"
+    env_file: .env

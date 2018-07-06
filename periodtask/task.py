@@ -22,10 +22,10 @@ class Task:
     def __init__(
         self, name, command, periods,
         run_on_start=False,
-        mail_success=False,
-        mail_failure=False,
-        mail_skipped=False,
-        mail_delayed=False,
+        mail_success=None,
+        mail_failure=None,
+        mail_skipped=None,
+        mail_delayed=None,
         send_mail_func=None,
         wait_timeout=10,
         max_lines=50,
@@ -49,7 +49,16 @@ class Task:
         self.mail_failure = mail_failure
         self.mail_skipped = mail_skipped
         self.mail_delayed = mail_delayed
-        self.send_mail_func = send_mail_func
+
+        if mail_success and send_mail_func:
+            self.mail_success = send_mail_func
+        if mail_failure and send_mail_func:
+            self.mail_failure = send_mail_func
+        if mail_skipped and send_mail_func:
+            self.mail_skipped = send_mail_func
+        if mail_delayed and send_mail_func:
+            self.mail_delayed = send_mail_func
+
         self.wait_timeout = wait_timeout
         self.max_lines = max_lines
         self.stop_signal = stop_signal
@@ -122,15 +131,9 @@ class Task:
         self.process_threads.append(thrd)
         thrd.start()
 
-    def send_mail(self, subject, message, html_message=None):
-        if callable(self.send_mail_func):
-            self.send_mail_func(
-                subject, message, html_message=html_message)
-        else:
-            logger.warning('task.send_mail_func is not callable')
-
     def send_mail_template(
-        self, subject_template, text_template, html_template, **kwargs
+        self, send_func,
+        subject_template, text_template, html_template, **kwargs
     ):
         get_template = self.template_lookup.get_template
         subject = get_template(subject_template)
@@ -140,7 +143,7 @@ class Task:
         text = text.render(**kwargs)
         html = get_template(html_template)
         html = html.render(**kwargs)
-        self.send_mail(subject, text, html_message=html)
+        send_func(subject, text, html_message=html)
 
     def check_subprocesses(self):
         if not self.process_threads:
@@ -159,6 +162,7 @@ class Task:
             if retcode == 0:
                 if self.mail_success:
                     self.send_mail_template(
+                        self.mail_success,
                         'success_subject.txt',
                         'success.txt',
                         'success.html',
@@ -167,6 +171,7 @@ class Task:
             else:
                 if self.mail_failure:
                     self.send_mail_template(
+                        self.mail_success,
                         'failure_subject.txt',
                         'failure.txt',
                         'failure.html',
@@ -180,6 +185,7 @@ class Task:
         logger.warning(msg)
         if getattr(self, 'mail_%s' % typ):
             self.send_mail_template(
+                self.mail_success,
                 '%s_subject.txt' % typ,
                 '%s.txt' % typ,
                 '%s.html' % typ,

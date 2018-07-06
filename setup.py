@@ -12,7 +12,7 @@ setup(
     name='periodtask',
     description='Periodic task with timezone',
     long_description=long_description,
-    version='0.4.3',
+    version=os.environ.get('VERSION'),
     url='https://github.com/vertisfinance/periodtask',
     author='Richard Bann',
     author_email='richard.bann@vertis.com',
@@ -21,7 +21,7 @@ setup(
         'Programming Language :: Python :: 3.6'
     ],
     install_requires=[
-        'pytz >= 2017.2',
+        'pytz >= 2018.5',
         'mako == 1.0.7',
     ],
     license='MIT',

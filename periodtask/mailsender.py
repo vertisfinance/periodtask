@@ -1,66 +1,71 @@
-from threading import Thread
 from email.message import EmailMessage
-import os
 import ssl
 import smtplib
 import logging
+from threading import Thread
 
 
 logger = logging.getLogger('periodtask.mailsender')
 
 
-SMTP_HOST = os.environ.get('SMTP_HOST')
-SMTP_PORT = os.environ.get('SMTP_PORT')
-SMTP_TIMEOUT = int(os.environ.get('SMTP_TIMEOUT', 10))
-SMTP_USE_SSL = os.environ.get('SMTP_USE_SSL', '') in ('True', 'true')
-SMTP_USE_TLS = os.environ.get('SMTP_USE_TLS', '') in ('True', 'true')
-SMTP_USERNAME = os.environ.get('SMTP_USERNAME', None)
-SMTP_PASSWORD = os.environ.get('SMTP_PASSWORD', None)
+class MailSender:
+    def __init__(
+        self, host, port, from_email, recipient_list,
+        timeout=10, use_ssl=False, use_tls=False, username=None, password=None,
+    ):
+        self.host, self.port = host, port
+        self.from_email, self.recipient_list = from_email, recipient_list
+        self.timeout, self.use_ssl, self.use_tls = timeout, use_ssl, use_tls
+        self.username, self.password = username, password
 
-CONNECTION_CLASS = smtplib.SMTP_SSL if SMTP_USE_SSL else smtplib.SMTP
+        self.connection_class = smtplib.SMTP_SSL if use_ssl else smtplib.SMTP
+        if isinstance(recipient_list, str):
+            self.recipient_list = [recipient_list]
 
-
-def _send(message):
-    logger.debug('message sender thread starts')
-    msg = '(%s) to %s' % (message['Subject'], message['To'])
-    try:
-        conn = CONNECTION_CLASS(SMTP_HOST, SMTP_PORT, timeout=SMTP_TIMEOUT)
-        if SMTP_USE_TLS:
-            conn.starttls()
-        logger.debug('starttls ok')
-        if SMTP_USERNAME and SMTP_PASSWORD:
-            conn.login(SMTP_USERNAME, SMTP_PASSWORD)
-        logger.debug('login ok')
-
+    def _send(self, message):
+        logger.debug('message sender starts')
+        msg = '(%s) to %s' % (message['Subject'], message['To'])
         try:
-            refused = conn.send_message(message)
-        except: # NOQA
-            logger.exception('sending error')
-        else:
-            if refused:
-                logger.warning('refused: %s' % msg)
+            conn = self.connection_class(
+                self.host, self.port, timeout=self.timeout
+            )
+            if self.use_tls:
+                conn.starttls()
+            logger.debug('starttls ok')
+            if self.username and self.password:
+                conn.login(self.username, self.password)
+            logger.debug('login ok')
+
+            try:
+                refused = conn.send_message(message)
+            except Exception:
+                logger.exception('sending error')
             else:
-                logger.info('e-mail sent: %s' % msg)
+                if refused:
+                    logger.warning('refused: %s' % msg)
+                else:
+                    logger.info('e-mail sent: %s' % msg)
 
-        try:
-            conn.quit()
-        except (ssl.SSLError, smtplib.SMTPServerDisconnected):
-            # This happens when calling quit() on a TLS connection
-            # sometimes, or when the connection was already disconnected
-            # by the server.
-            conn.close()
-        except smtplib.SMTPException:
-            logger.exception('error during quit')
-    except:  # NOQA
-        logger.exception('Error sending e-mail: %s' % msg)
+            try:
+                conn.quit()
+            except (ssl.SSLError, smtplib.SMTPServerDisconnected):
+                # This happens when calling quit() on a TLS connection
+                # sometimes, or when the connection was already disconnected
+                # by the server.
+                conn.close()
+            except smtplib.SMTPException:
+                logger.exception('error during quit')
+        except Exception:
+            logger.exception('Error sending e-mail: %s' % msg)
 
-
-def send_mail(subject, message, from_email, recipient_list, html_message=None):
-    msg = EmailMessage()
-    msg['Subject'] = subject
-    msg['From'] = from_email
-    msg['To'] = ', '.join(recipient_list)
-    msg.set_content(message)
-    if html_message:
-        msg.add_alternative(html_message, subtype='html')
-    Thread(target=_send, args=(msg,)).start()
+    def send_mail(
+            self, subject, message, html_message=None
+    ):
+        msg = EmailMessage()
+        msg['Subject'] = subject
+        msg['From'] = self.from_email
+        msg['To'] = ', '.join(self.recipient_list)
+        msg.set_content(message)
+        if html_message:
+            msg.add_alternative(html_message, subtype='html')
+        Thread(target=self._send, args=(msg,)).start()
