@@ -8,11 +8,14 @@ here = os.path.abspath(os.path.dirname(__file__))
 with io.open(os.path.join(here, 'README.rst'), encoding='utf-8') as f:
     long_description = '\n' + f.read()
 
+with io.open(os.path.join(here, 'VERSION'), encoding='utf-8') as f:
+    VERSION = f.read().strip()
+
 setup(
     name='periodtask',
     description='Periodic task with timezone',
     long_description=long_description,
-    version=os.environ.get('VERSION'),
+    version=VERSION,
     url='https://github.com/vertisfinance/periodtask',
     author='Richard Bann',
     author_email='richard.bann@vertis.com',
