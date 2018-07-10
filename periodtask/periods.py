@@ -1,4 +1,5 @@
 import logging
+from datetime import datetime, timedelta
 
 import pytz
 
@@ -6,151 +7,209 @@ import pytz
 logger = logging.getLogger('periodtask.periods')
 
 
-class BadPeriodDef(Exception):
-    pass
-
-
 class BadCronFormat(Exception):
     pass
 
 
 class Period:
-    def __init__(
-        self,
-        minutes=set(range(0, 60, 5)),
-        hours=set(range(0, 24)),
-        days=set(range(1, 32)),
-        months=set(range(1, 13)),
-        weekdays=set(range(1, 8)),  # Monday: 1, ..., Sunday: 7
-        timezone='UTC',
-        years=set(range(1900, 3000)),
-        seconds=set([0]),
-    ):
-        self.minutes = minutes
-        self.hours = hours
-        self.days = days
-        self.months = months
-        self.weekdays = weekdays
-        self.timezone = pytz.timezone(timezone)
-        self.years = years
-        self.seconds = seconds
-
-    def __str__(self):
-        return '\n'.join([
-            'minutes: %s' % self.minutes,
-            'hours: %s' % self.hours,
-            'days: %s' % self.days,
-            'months: %s' % self.months,
-            'weekdays: %s' % self.weekdays,
-            'timezone: %s' % self.timezone,
-            'years: %s' % self.years,
-            'seconds: %s' % self.seconds,
-        ])
-
-
-def parse_period(p):
-    if isinstance(p, Period):
-        return p
-    if isinstance(p, str):
-        return parse_cron(p)
-    raise BadPeriodDef(p)
-
-
-def parse_cron(cron_string):
-    parts = ['*/5', '*', '*', '*', '*', 'UTC', '*', '0']
-    try:
-        for i, p in enumerate([p.strip() for p in cron_string.split()]):
-            parts[i] = p
-    except IndexError:
-        raise BadCronFormat('too many parts of format string')
-
-    minutes = to_list(parts[0], 0, 59)
-    hours = to_list(parts[1], 0, 59)
-    days = to_list(parts[2], 1, 31)
-    months = to_list(parts[3], 1, 12)
-    weekdays = to_list(parts[4], 1, 7)
-    timezone = parts[5]
-    years = to_list(parts[6], 1900, 3000)
-    seconds = to_list(parts[7], 0, 60)
-
-    try:
-        pytz.timezone(timezone)
-    except pytz.exceptions.UnknownTimeZoneError:
-        raise BadCronFormat('unknown timezone: %s' % timezone)
-
-    return Period(
-        minutes, hours, days, months, weekdays, timezone, years, seconds
+    DOW = {
+        'MON': 1, 'TUE': 2, 'WED': 3, 'THU': 4, 'FRI': 5, 'SAT': 6, 'SUN': 7
+    }
+    SEC_FMT = '{:4}-{:0>2}-{:0>2} {:0>2}:{:0>2}:{:0>2} {}, {}'
+    VALID_LF = (
+        'F', 'FF', 'FFF', 'FFFF', 'FFFFF',
+        'L', 'LL', 'LLL', 'LLLL', 'LLLLL',
     )
+    DELTA = timedelta(days=7)
 
+    def __init__(self, cron='0 */5 * * * * UTC'):
+        (
+            self.seconds, self.minutes, self.hours, self.days,
+            self.months, self.years, self.timezone
+        ) = self._parse_cron(cron)
 
-def to_list(fmt, low, high):
-    ret = _to_list(fmt, low, high)
-    if not ret:
-        raise BadCronFormat('empty set, would never run: %s' % fmt)
-    return ret
+    def _parse_cron(self, cron):
+        parts = ['0', '*/5', '*', '*', '*', '*', 'UTC']
+        try:
+            for i, p in enumerate([p for p in cron.split()]):
+                parts[i] = p
+        except IndexError:
+            raise BadCronFormat('too many parts of format string') from None
 
+        seconds = self._parse_part(parts[0], 0, 60)
+        minutes = self._parse_part(parts[1], 0, 59)
+        hours = self._parse_part(parts[2], 0, 59)
+        days = self._parse_part(parts[3], 1, 31, dom_allowed=True)
+        months = self._parse_part(parts[4], 1, 12)
+        years = self._parse_part(parts[5], 0, None)
+        timezone = parts[6]
+        try:
+            pytz.timezone(timezone)
+        except pytz.exceptions.UnknownTimeZoneError:
+            raise BadCronFormat('unknown timezone: %s' % timezone) from None
 
-def _to_list(fmt, low, high, inner=False):
-    try:
-        fmt = fmt.strip()
-        fmt = int(fmt)
-    except ValueError:
-        pass
+        return (
+            seconds, minutes, hours, days, months, years,
+            pytz.timezone(timezone)
+        )
 
-    if fmt == '':
-        return set()
+    def _parse_part(self, part, low, high, dom_allowed=False):
+        part = part.strip()
+        splitted = part.split(',')
+        return [self._parse_split(x, low, high, dom_allowed) for x in splitted]
 
-    if isinstance(fmt, int):
-        if fmt < low or fmt > high:
-            desc = 'value not in range %s-%s (%s)' % (low, high, fmt)
-            raise BadCronFormat(desc)
-        return {fmt}
+    def _parse_split(self, split, low, high, dom_allowed):
+        try:
+            return self._parse_atom(split, low, high, dow=False)
+        except BadCronFormat:
+            if dom_allowed:
+                return self._parse_atom(split, 1, 7, dow=True)
+            else:
+                raise
 
-    if isinstance(fmt, list):
-        if inner:
-            raise BadCronFormat('too complex')
+    def _parse_atom(self, atom, low, high, dow=False):
+        atom = atom.strip()
 
-        def sublist(x):
-            return _to_list(x, low, high, inner=True)
+        # the star is an alias to '-'
+        atom = '-' if atom == '*' else atom
 
-        return set.union(*(sublist(x) for x in fmt))
+        # handle the case when it is a simple integer
+        n = self._parse_int(atom, low, high, dow)
+        if n is not None:
+            return (n, n + 1, 1, dow)
 
-    if isinstance(fmt, str):
-        splitted = fmt.split(',')
-        if len(splitted) > 1:
-            def sublist(x):
-                return _to_list(x, low, high)
-            return set.union(*(sublist(x) for x in splitted))
-
-        if fmt == '*':
-            return set(range(low, high + 1))
-
-        _rng = fmt.split('/', maxsplit=1)
-        if len(_rng) == 1:
-            rng, step = _rng[0], 1
+        # parse the step part
+        _rng_step = atom.split('/')
+        if len(_rng_step) == 1:
+            rng, step = atom, 1
+        elif len(_rng_step) == 2:
+            rng, step = _rng_step
         else:
-            [rng, step] = _rng
-        if step == '':
-            step = 1
-        try:
-            step = int(step)
-        except ValueError:
-            desc = 'step should be an integer (%s)' % fmt
+            desc = 'invalid format: %s' % atom
             raise BadCronFormat(desc)
 
-        if rng == '*':
-            return set(range(low, high + 1, step))
+        # parse the range
+        rng = '-' if rng == '*' else rng
+        lo_hi = rng.split('-')
+        if len(lo_hi) == 1:
+            lo, hi = lo_hi[0], lo_hi[0]
+        elif len(lo_hi) == 2:
+            lo, hi = lo_hi
+        else:
+            desc = 'invalid format: %s' % atom
+            raise BadCronFormat(desc)
+        if dow:
+            lo, hi = 'MON' if lo == '' else lo, 'SUN' if hi == '' else hi
+        else:
+            lo, hi = low if lo == '' else lo, high if hi == '' else hi
+        lo = self._parse_int(lo, low, high, dow)
+        if lo is None:
+            desc = 'lower bound is invalid: %s' % atom
+            raise BadCronFormat(desc)
 
-        splitted = rng.split('-', maxsplit=1)
-        if len(splitted) != 2:
-            raise BadCronFormat('invalid range (%s)' % fmt)
+        if hi is not None:
+            hi = self._parse_int(hi, low, high, dow)
+            if hi is None:
+                desc = 'upper bound is invalid: %s' % atom
+                raise BadCronFormat(desc)
+
+        if hi is not None and lo > hi:
+            desc = 'lower bound is too high: %s' % atom
+            raise BadCronFormat(desc)
+
+        # parse step
+        if dow and step in self.VALID_LF:
+            pass
+        else:
+            step = self._parse_int(step, 1, high)
+            if step is None:
+                desc = 'step is invalid: %s' % atom
+                raise BadCronFormat(desc)
+        return (lo, hi if hi is None else hi + 1, step, dow)
+
+    def _parse_int(self, n, low, high, dow=False):
+        if dow:
+            try:
+                return self.DOW[n.upper()]
+            except (KeyError, AttributeError):
+                return None
         try:
-            a, b = int(splitted[0]), int(splitted[1])
+            n = int(n)
         except ValueError:
-            raise BadCronFormat('invalid range (%s)' % fmt)
+            return
+        else:
+            if n < low:
+                desc = 'value is lower than %s (%s)' % (low, n)
+                raise BadCronFormat(desc)
+            if high is not None and n > high:
+                desc = 'value is higher than %s (%s)' % (high, n)
+                raise BadCronFormat(desc)
+            return n
 
-        a = low if a < low else a
-        b = high if b > high else b
-        return set(range(a, b + 1, step))
+    def _check_part(self, part, actual):
+        for lo, hi, step, _ in part:
+            hi = actual + 1 if hi is None else hi
+            if actual in range(lo, hi, step):
+                return True
+        return False
 
-    raise BadCronFormat('invalid type (%s)' % fmt)
+    def _check(self, sec):
+        utc = datetime.utcfromtimestamp(sec).replace(tzinfo=pytz.utc)
+        dt = self.timezone.normalize(utc).astimezone(self.timezone)
+        isocalendar = dt.isocalendar()
+
+        year = dt.year
+        weekday = isocalendar[2]
+        month = dt.month
+        day = dt.day
+        hour = dt.hour
+        minute = dt.minute
+        second = dt.second
+
+        if not self._check_part(self.seconds, second):
+            return False
+        if not self._check_part(self.minutes, minute):
+            return False
+        if not self._check_part(self.hours, hour):
+            return False
+        if not self._check_part(self.months, month):
+            return False
+        if not self._check_part(self.years, year):
+            return False
+
+        ok = False
+        for lo, hi, step, dow in self.days:
+            if not dow:
+                if day in range(lo, hi, step):
+                    ok = True
+                    break
+            else:
+                if weekday not in range(lo, hi):
+                    continue
+                if isinstance(step, int):
+                    if weekday in range(lo, hi, step):
+                        ok = True
+                        break
+                else:
+                    delta = self.DELTA
+                    var_dt = dt
+                    if step[0] == 'F':
+                        delta = -delta
+                    ok2 = True
+                    for i in range(1, len(step)):
+                        var_dt += delta
+                        if var_dt.month != month:
+                            ok2 = False
+                            break
+                    if ok2:
+                        var_dt += delta
+                        if var_dt.month != month:
+                            ok = True
+                            break
+        if not ok:
+            return False
+
+        return self.SEC_FMT.format(
+                year, month, day, hour, minute, second, self.timezone,
+                list(self.DOW.keys())[weekday - 1]
+            )

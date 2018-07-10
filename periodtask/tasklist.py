@@ -3,7 +3,7 @@ import time
 import threading
 
 
-logger = logging.getLogger('periodtask.task')
+logger = logging.getLogger('periodtask.tasklist')
 
 
 class TaskList:

@@ -1,13 +1,13 @@
 import logging
-from datetime import datetime
 import signal
 import os
 
-import pytz
+# import pytz
 from mako.lookup import TemplateLookup
 
 from .process_thread import ProcessThread
-from .periods import parse_period
+# from .periods import parse_period
+from .periods import Period
 
 
 logger = logging.getLogger('periodtask.task')
@@ -40,7 +40,8 @@ class Task:
     ):
         if not isinstance(periods, list) and not isinstance(periods, tuple):
             periods = [periods]
-        self.periods = [parse_period(x) for x in periods]
+        # self.periods = [parse_period(x) for x in periods]
+        self.periods = [Period(x) for x in periods]
 
         self.name = name
         self.command = command
@@ -74,42 +75,17 @@ class Task:
 
         self.process_threads = []
         self.first_check = True
-        self.sec_fmt = (
-            '{:4}-{:0>2}-{:0>2} {:0>2}:{:0>2}:{:0>2} ({}) (day of week: {})'
-        )
         self.delay_queue = []
 
     def check_second(self, sec):
         if self.first_check:
             self.first_check = False
             if self.run_on_start:
-                return 'run_on_start'
+                return 'START'
         for period in self.periods:
-            utc = datetime.utcfromtimestamp(sec).replace(tzinfo=pytz.utc)
-            dt = period.timezone.normalize(utc).astimezone(period.timezone)
-            isocalendar = dt.isocalendar()
-
-            year = dt.year
-            weekday = isocalendar[2]
-            month = dt.month
-            day = dt.day
-            hour = dt.hour
-            minute = dt.minute
-            second = dt.second
-
-            if (
-                second in period.seconds and
-                minute in period.minutes and
-                hour in period.hours and
-                day in period.days and
-                month in period.months and
-                weekday in period.weekdays and
-                year in period.years
-            ):
-                return self.sec_fmt.format(
-                    year, month, day, hour, minute, second, period.timezone,
-                    weekday
-                )
+            chk = period._check(sec)
+            if chk:
+                return chk
         return False
 
     def start_process_thread(self, formatted_sec):
