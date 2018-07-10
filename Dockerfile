@@ -8,7 +8,6 @@ RUN pip3 install --no-cache coverage==4.5.1
 RUN pip3 install --no-cache Sphinx==1.7.5
 RUN pip3 install --no-cache sphinx_rtd_theme==0.4.0
 
-STOPSIGNAL SIGINT
 ENV PYTHONUNBUFFERED 1
 ENV PYTHONPATH /periodtask
 

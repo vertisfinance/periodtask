@@ -138,6 +138,8 @@ class Period:
         except ValueError:
             return
         else:
+            if n < 0:
+                return None
             if n < low:
                 desc = 'value is lower than %s (%s)' % (low, n)
                 raise BadCronFormat(desc)

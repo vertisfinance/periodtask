@@ -7,3 +7,4 @@ services:
     volumes:
       - ".:/periodtask"
     env_file: .env
+    stop_signal: SIGTERM
