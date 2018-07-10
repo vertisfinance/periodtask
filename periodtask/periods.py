@@ -213,5 +213,5 @@ class Period:
 
         return self.SEC_FMT.format(
                 year, month, day, hour, minute, second, self.timezone,
-                list(self.DOW.keys())[weekday - 1]
+                [x for x in self.DOW if self.DOW[x] == weekday][0]
             )
