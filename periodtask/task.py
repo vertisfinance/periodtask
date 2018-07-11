@@ -2,11 +2,9 @@ import logging
 import signal
 import os
 
-# import pytz
 from mako.lookup import TemplateLookup
 
 from .process_thread import ProcessThread
-# from .periods import parse_period
 from .periods import Period
 
 
@@ -20,7 +18,8 @@ template_dir = os.path.join(base_dir, 'templates')
 
 class Task:
     def __init__(
-        self, name, command, periods,
+        self, name, command,
+        periods='',
         run_on_start=False,
         mail_success=None,
         mail_failure=None,
