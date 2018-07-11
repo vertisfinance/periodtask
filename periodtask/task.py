@@ -189,10 +189,11 @@ class Task:
         if self.delay_queue:
             self.start_process_thread(self.delay_queue.pop(0))
 
-    def stop(self):
+    def stop(self, check_subprocesses=True):
         if self.process_threads:
             for proc in self.process_threads:
                 proc.stop()
                 proc.join()
-            self.check_subprocesses()
+            if check_subprocesses:
+                self.check_subprocesses()
         logger.info('task stopped: %s' % self.name)

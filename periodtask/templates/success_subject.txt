@@ -1,1 +1,1 @@
-${subproc.task_name | n} COMPLETED - ${subproc.formatted_sec | n}
+${subproc.task_name | n} COMPLETED - started for: ${subproc.formatted_sec | n}
