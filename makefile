@@ -1,11 +1,14 @@
 usr := $(shell id -u):$(shell id -g)
+version := $(shell sed -rn "s/^VERSION = '(.*)'$$/\1/p" setup.py)
 
-distribute: v := $(shell cat VERSION)
+version:
+	@echo $(version)
+
 distribute: build test docs
 	@-rm dist/*
 	@docker-compose run --rm -u $(usr) periodtask python3 setup.py sdist
 	@docker-compose run --rm -u $(usr) periodtask twine upload dist/*
-	@git tag $(v)
+	@git tag $(version)
 	@git push --tags
 
 build:

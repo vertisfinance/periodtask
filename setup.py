@@ -8,8 +8,9 @@ here = os.path.abspath(os.path.dirname(__file__))
 with io.open(os.path.join(here, 'README.rst'), encoding='utf-8') as f:
     long_description = '\n' + f.read()
 
-with io.open(os.path.join(here, 'VERSION'), encoding='utf-8') as f:
-    VERSION = f.read().strip()
+# with io.open(os.path.join(here, 'VERSION'), encoding='utf-8') as f:
+#     VERSION = f.read().strip()
+VERSION = '0.5.2'
 
 setup(
     name='periodtask',

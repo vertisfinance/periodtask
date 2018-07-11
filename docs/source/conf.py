@@ -3,11 +3,13 @@
 
 import os
 import io
+import re
+
 import sphinx_rtd_theme
 
 here = os.path.abspath(os.path.dirname(__file__))
-with io.open(os.path.join(here, '../../VERSION'), encoding='utf-8') as f:
-    VERSION = f.read().strip()
+with io.open(os.path.join(here, '../../setup.py'), encoding='utf-8') as f:
+    VERSION = re.search('^VERSION = (.*)$', f.read(), re.M).group(1)
 
 extensions = [
     'sphinx.ext.autodoc',

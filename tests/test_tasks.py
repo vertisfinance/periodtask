@@ -20,11 +20,11 @@ class CronTest(unittest.TestCase):
         def send(subject, text, html_message):
             tasklist[0]._stop(check_subprocesses=False)
             tasklist.pop()
-            self.assertEqual(len(text.splitlines()), 6)
+            self.assertEqual(len(text.splitlines()), 55)
 
         tl = TaskList(
             Task(
-                'test2', ('cat', 'VERSION'), '*', run_on_start=True,
+                'test2', ('cat', 'README.rst'), '*', run_on_start=True,
                 mail_success=send
             )
         )
@@ -44,7 +44,7 @@ class CronTest(unittest.TestCase):
 
         tl = TaskList(
             Task(
-                'test2', ('tests/task_script.py',), '*', run_on_start=True,
+                'test3', ('tests/task_script.py',), '*', run_on_start=True,
                 mail_success=send,
                 max_lines=2,
             )
