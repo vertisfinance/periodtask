@@ -86,7 +86,8 @@ class ProcessThread(threading.Thread):
             stdin=PIPE,
             stdout=PIPE,
             stderr=PIPE,
-            encoding='utf-8',
+            # encoding='utf-8',  # This only works 3.6 and above
+            universal_newlines=True,
             start_new_session=True,
             bufsize=1,
             cwd=self.cwd,
