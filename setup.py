@@ -30,6 +30,6 @@ setup(
     license='MIT',
     packages=['periodtask'],
     package_data={
-        '': ['templates/*'],
+        '': ['templates/*', 'VERSION'],
     }
 )
