@@ -150,7 +150,7 @@ class Task:
             else:
                 if self.mail_failure:
                     self.send_mail_template(
-                        self.mail_success,
+                        self.mail_failure,
                         'failure_subject.txt',
                         'failure.txt',
                         'failure.html',
@@ -164,7 +164,7 @@ class Task:
         logger.warning(msg)
         if getattr(self, 'mail_%s' % typ):
             self.send_mail_template(
-                self.mail_success,
+                getattr(self, 'mail_%s' % typ),
                 '%s_subject.txt' % typ,
                 '%s.txt' % typ,
                 '%s.html' % typ,
