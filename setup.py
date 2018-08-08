@@ -10,7 +10,7 @@ with io.open(os.path.join(here, 'README.rst'), encoding='utf-8') as f:
 
 # with io.open(os.path.join(here, 'VERSION'), encoding='utf-8') as f:
 #     VERSION = f.read().strip()
-VERSION = '0.5.3'
+VERSION = '0.5.4'
 
 setup(
     name='periodtask',
