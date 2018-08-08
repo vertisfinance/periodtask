@@ -9,7 +9,7 @@ import sphinx_rtd_theme
 
 here = os.path.abspath(os.path.dirname(__file__))
 with io.open(os.path.join(here, '../../setup.py'), encoding='utf-8') as f:
-    VERSION = re.search('^VERSION = (.*)$', f.read(), re.M).group(1)
+    VERSION = re.search("^VERSION = '(.*)'$", f.read(), re.M).group(1)
 
 extensions = [
     'sphinx.ext.autodoc',
@@ -58,7 +58,6 @@ todo_include_todos = False
 
 html_theme = "sphinx_rtd_theme"
 html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
-
 
 # def setup(app):
 #     app.add_stylesheet('fix.css')
