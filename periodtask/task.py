@@ -17,6 +17,72 @@ default_template_dir = os.path.join(base_dir, 'templates')
 
 
 class Task:
+    """
+    Represents a task to schedule.
+
+    :param str name: The name of the task, will apear in logs and emails.
+    :param tuple command: See ``args`` param of the `Popen constructor
+      <https://docs.python.org/3/library/subprocess.html#subprocess.Popen>`_.
+    :param list/str periods: A cron expression (str) or a list of them. See
+      :doc:`cronref` for more information. By default (when set to an empyt
+      string) this will be equivalent to ``0 */5 * * * * UTC``.
+    :param bool run_on_start: Indicates weather the task should run when the
+      scheduler starts no matter what was given in ``periods``. Useful for
+      manually testing the task.
+    :param func/bool mail_success: If set to a truthy value an email will be
+      sent after the task run successfully. If this is a function, this
+      function will be used to send out the email (if **send_mail_func** does
+      not override it). The signature of the function is
+
+      .. code-block:: python
+
+        def send_mail(subject, message, html_message=None)
+    :param func/bool mail_failure: Controls emails sent when the task fails.
+      Otherwise it is the same as **mail_success**.
+    :param func/bool mail_skipped: Controls emails sent when the task is
+      skipped due to the defined **policy**.
+    :param func/bool mail_deleyed: Controls emails sent when the task is
+      delayed due to the defined **policy**.
+    :param func send_mail_func: If set, this must be a function. This function
+      will be used to send emails, no matter what was set in **mail_...**
+      params.
+    :param number wait_timeout: After sending **stop_signal** to the task
+      process, we wait this many seconds for the process to stop. If the
+      timeout expires, we kill the process.
+    :param int max_lines: STDOUT and STDERR are collected from the task
+      process. To avoid haevy memory usage we only store this many lines in
+      memory. More precisely STDOUT head and tail, STDERR head and tail are
+      list of lines. This parameter controls the maximum length of these lists.
+    :param int stop_signal: This signal will be sent to the task process when
+      we want to stop it gracefully.
+    :param int policy: Available values are ``periodtask.SKIP``,
+      ``periodtask.DELAY`` and ``periodtask.RUN``.
+
+      **SKIP**
+        If a process is (still) running and the task is scheduled, this new
+        process will be skipped. If requested, an email will be sent.
+
+      **DELAY**
+        If a process is (still) running and the task is scheduled, this new
+        process will be delayed and will run immediatelly when the actual
+        process terminates. If requested, an email will be sent.
+
+      **RUN**
+        Tasks will always run when scheduled.
+
+    :param list/str template_dir: Directories to look for email templates in.
+    :param logging.logger stdout_logger: The logger to use for the STDOUT of
+      the task process.
+    :param int stdout_level: The STDOUT of the task process will be logged to
+      this level.
+    :param logging.logger stderr_logger: The logger to use for the STDERR of
+      the task process.
+    :param int stderr_level: The STDERR of the task process will be logged to
+      this level.
+    :param str cwd: The task process will run with ``cwd`` as the working
+      directory. See the `Popen constructor
+      <https://docs.python.org/3/library/subprocess.html#subprocess.Popen>`_.
+    """
     def __init__(
         self, name, command,
         periods='',

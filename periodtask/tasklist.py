@@ -8,6 +8,11 @@ logger = logging.getLogger('periodtask.tasklist')
 
 
 class TaskList:
+    """
+    Defines the tasks to run and starts the sceduler.
+    Pass in :py:class:`Task <periodtask.Task>` instances
+    to schedule.
+    """
     def __init__(self, *args):
         self.tasks = args
         self.last_checked = None
@@ -24,6 +29,10 @@ class TaskList:
         self.last_checked = now
 
     def start(self):
+        """
+        Start The scheduler. This will block until ``SIGTERM`` or
+        ``SIGINT`` received.
+        """
         logger.info('tasklist started')
 
         def handler(num, frame):

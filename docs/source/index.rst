@@ -14,20 +14,25 @@ Features
 - Different policies (``SKIP``, ``DELAY``, ``RUN``) to handle situations
   when an instance of a task to start is already running
 
-Quick Reference (Cheat sheet)
-=============================
-
-If you already know the concepts but need a quick refresh on the API,
-here is a detailed example::
-
-  #!/usr/bin/env python3
-
-  from periodtask import TaskList, Task
-
-  TaskList(Task('lister', ('ls',))).start()
-
+Topics
+======
 
 .. toctree::
   :maxdepth: 3
 
-  tutorial
+  quickref
+  cronref
+  API
+
+Release Notes
+=============
+
+0.5.3
+-----
+- Bugfix: ``mail_success``, ``mail_failure``, ``mail_skipped``,
+  ``mail_delayed`` parameters of ``Task`` were not handled correctly.
+
+0.5.2
+-----
+- ``template_dir`` given to ``Task`` extends the default template dir, so
+  templates can be overridden individually.
