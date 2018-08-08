@@ -13,7 +13,7 @@ logger = logging.getLogger('periodtask.task')
 
 
 base_dir = os.path.dirname(os.path.realpath(__file__))
-template_dir = os.path.join(base_dir, 'templates')
+default_template_dir = os.path.join(base_dir, 'templates')
 
 
 class Task:
@@ -30,7 +30,7 @@ class Task:
         max_lines=50,
         stop_signal=signal.SIGTERM,
         policy=SKIP,
-        template_dir=template_dir,
+        template_dir=[],
         stdout_logger=logging.getLogger('periodtask.stdout'),
         stdout_level=logging.INFO,
         stderr_logger=logging.getLogger('periodtask.stderr'),
@@ -63,8 +63,12 @@ class Task:
         self.max_lines = max_lines
         self.stop_signal = stop_signal
         self.policy = policy
+        if isinstance(template_dir, list):
+            template_dir = template_dir + [default_template_dir]
+        else:
+            template_dir = [template_dir] + [default_template_dir]
         self.template_lookup = TemplateLookup(
-            directories=[template_dir], default_filters=['h']
+            directories=template_dir, default_filters=['h']
         )
         self.stdout_logger = stdout_logger
         self.stdout_level = stdout_level
