@@ -1,4 +1,4 @@
-Command ${' '.join(subproc.command) | n} returned with code ${subproc.returncode | n,str}.
+The command ${' '.join(subproc.command) | n} has returned with code ${subproc.returncode | n,str}.
 
 % if subproc.stdout_lines:
 STDOUT

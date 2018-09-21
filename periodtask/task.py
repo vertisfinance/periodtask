@@ -82,6 +82,10 @@ class Task:
     :param str cwd: The task process will run with ``cwd`` as the working
       directory. See the `Popen constructor
       <https://docs.python.org/3/library/subprocess.html#subprocess.Popen>`_.
+    :param bool email_limitation: If ``True``, only one ``skip`` or ``delay``
+      email will be sent. When the blocking process terminates, an extra
+      email will be sent using the ``mail_skipped`` or ``mail_delayed``
+      functions.
     """
     def __init__(
         self, name, command,
@@ -102,6 +106,7 @@ class Task:
         stderr_logger=logging.getLogger('periodtask.stderr'),
         stderr_level=logging.INFO,
         cwd=None,
+        email_limitation=True
     ):
         if not isinstance(periods, list) and not isinstance(periods, tuple):
             periods = [periods]
@@ -141,10 +146,12 @@ class Task:
         self.stderr_logger = stderr_logger
         self.stderr_level = stderr_level
         self.cwd = cwd
+        self.email_limitation = email_limitation
 
         self.process_threads = []
         self.first_check = True
         self.delay_queue = []
+        self.email_limitation_active = False
 
     def check_second(self, sec):
         if self.first_check:
@@ -223,11 +230,28 @@ class Task:
                         subproc=subproc
                     )
 
+            # If we have sent out a skipped or delayed email, we have to
+            # send an ok email here
+            func = None
+            if self.email_limitation_active:
+                self.email_limitation_active = False
+                if self.policy == SKIP:
+                    func = self.mail_skipped
+                elif self.policy == DELAY:
+                    func = self.mail_delayed
+
+            if func:
+                self.send_mail_template(
+                    func,
+                    'ok_subject.txt',
+                    'ok.txt',
+                    'ok.html',
+                    subproc=subproc
+                )
+
         self.process_threads = new_process_threads
 
     def skipped_or_delayed(self, formatted_sec, typ='skipped'):
-        msg = 'task %s %s for %s' % (self.name, typ, formatted_sec)
-        logger.warning(msg)
         if getattr(self, 'mail_%s' % typ):
             self.send_mail_template(
                 getattr(self, 'mail_%s' % typ),
@@ -247,16 +271,38 @@ class Task:
 
         if self.process_threads:
             if self.policy == SKIP:
-                if formatted_sec:
-                    self.skipped_or_delayed(self.delay_queue.pop(0))
+                if not formatted_sec:
+                    return
+
+                msg = 'task %s %s for %s' % (
+                    self.name, 'skipped', formatted_sec
+                )
+                logger.warning(msg)
+
+                if not self.email_limitation_active:
+                    self.skipped_or_delayed(formatted_sec)
+                    self.delay_queue.pop(0)
+                    if self.email_limitation:
+                        self.email_limitation_active = True
                 return
             elif self.policy == DELAY:
-                if formatted_sec:
+                if not formatted_sec:
+                    return
+
+                msg = 'task %s %s for %s' % (
+                    self.name, 'delayed', formatted_sec
+                )
+                logger.warning(msg)
+
+                if not self.email_limitation_active:
                     self.skipped_or_delayed(formatted_sec, typ='delayed')
+                    if self.email_limitation:
+                        self.email_limitation_active = True
                 return
 
         if self.delay_queue:
             self.start_process_thread(self.delay_queue.pop(0))
+            return True
 
     def stop(self, check_subprocesses=True):
         if self.process_threads:

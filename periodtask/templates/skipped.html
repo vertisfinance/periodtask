@@ -6,7 +6,7 @@
     <title>!!! ${task_name} SKIPPED - ${current_sec}</title>
   </head>
   <body>
-    Process still running and policy is SKIP.
+    The following process is still running and policy is SKIP:
     % for task in running:
     <h4 style="background-color: #f0f0f0">Started for: ${task.formatted_sec}</h4>
     % if task.stdout_lines:

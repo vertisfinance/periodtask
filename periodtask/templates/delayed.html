@@ -6,7 +6,7 @@
     <title>!!! ${task_name} DELAYED - ${current_sec}</title>
   </head>
   <body>
-    Process(es) still running and policy is DELAY.
+    The following process(es) are still running and policy is DELAY:
     % for task in running:
     <h4 style="background-color: #f0f0f0">Started for: ${task.formatted_sec}</h4>
     % if task.stdout_lines:

@@ -27,6 +27,11 @@ Topics
 Release Notes
 =============
 
+0.5.5
+-----
+- Improved wording of buildtin e-mail templates.
+- Added the ``email_limitation`` parameter to ``Task``.
+
 0.5.3
 -----
 - Bugfix: ``mail_success``, ``mail_failure``, ``mail_skipped``,

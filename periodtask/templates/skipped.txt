@@ -1,4 +1,4 @@
-Process still running and policy is SKIP.
+The following process is still running and policy is SKIP:
 
 % for task in running:
 Started for: ${task.formatted_sec | n}

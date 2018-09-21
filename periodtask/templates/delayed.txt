@@ -1,4 +1,4 @@
-Process(es) still running and policy is DELAY.
+The following process(es) are still running and policy is DELAY:
 
 % for task in running:
 Started for: ${task.formatted_sec | n}

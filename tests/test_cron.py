@@ -176,3 +176,10 @@ class CronTest(unittest.TestCase):
         self.assertEqual(
             p.years, [(0, 2001, 1, False), (2010, None, 1, False)]
         )
+
+    def test_every_six_minutes(self):
+        p = Period('0 1-/5')
+        self.assertEqual(
+            p._check(ts('2018-08-30 13:06:00')),
+            '2018-08-30 13:06:00 UTC, THU'
+        )

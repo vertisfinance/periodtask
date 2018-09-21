@@ -6,7 +6,7 @@
     <title>!!! ${subproc.task_name} FAILURE - ${subproc.formatted_sec}</title>
   </head>
   <body>
-    Command <code style="background-color: #f0f0f0">${' '.join(subproc.command)}</code> returned with code ${subproc.returncode}.
+    The command <code style="background-color: #f0f0f0">${' '.join(subproc.command)}</code> has returned with code ${subproc.returncode}.
     % if subproc.stdout_lines:
     <h4 style="border-bottom: 1px solid black">STDOUT</h4>
     <pre>${subproc.stdout_lines}</pre>

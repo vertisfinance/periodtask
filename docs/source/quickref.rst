@@ -55,7 +55,8 @@ Quick reference
           stdout_level=logging.DEBUG,  # send STDOUT logs to this level
           stderr_logger=stderr_logger,
           stderr_level=logging.WARNING,  # send STDERR logs to this level
-          cwd=None  # run the command in this directory (None to keep current)
+          cwd=None,  # run the command in this directory (None to keep current)
+          email_limitation=True  # send only one skipped or delayed message
       ),
       Task(  # you can specify more than one task
           'catter', ('cat', 'README.rst'), '5 20,40 7-19 MON-FRI *',

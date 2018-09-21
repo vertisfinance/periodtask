@@ -25,7 +25,9 @@ class TaskList:
         for task in self.tasks:
             task.check_subprocesses()
             for sec in range(self.last_checked + 1, now + 1):
-                task.check_for_second(sec)
+                # Only one process of a task can be started in one tick
+                if task.check_for_second(sec):
+                    break
         self.last_checked = now
 
     def start(self):
@@ -45,7 +47,7 @@ class TaskList:
         self.last_checked = int(time.time()) - 1
         while not self.stopped:
             self._tick()
-            time.sleep(1)
+            time.sleep(0.5)
 
     def _stop(self, check_subprocesses=True):
         signal.signal(signal.SIGINT, self.orig_sigint_handler)
