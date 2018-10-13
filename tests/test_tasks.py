@@ -100,3 +100,75 @@ class TaskTest(unittest.TestCase):
         tasklist.append(tl)
 
         tl.start()
+
+    def test_max_lines2(self):
+        tasklist = []
+
+        def send(subject, text, html_message):
+            tasklist[0]._stop(check_subprocesses=False)
+            self.assertEqual(len(text.splitlines()), 17)
+
+        tl = TaskList(
+            Task(
+                'test2', ('tests/task_script.py',), '*', run_on_start=True,
+                mail_success=send,
+                max_lines=((1, 10), None),
+            )
+        )
+
+        tasklist.append(tl)
+        tl.start()
+
+    def test_max_lines3(self):
+        tasklist = []
+
+        def send(subject, text, html_message):
+            tasklist[0]._stop(check_subprocesses=False)
+            self.assertEqual(len(text.splitlines()), 25)
+
+        tl = TaskList(
+            Task(
+                'test3', ('tests/task_script.py',), '*', run_on_start=True,
+                mail_success=send,
+                max_lines=((None, 2), None),
+            )
+        )
+
+        tasklist.append(tl)
+        tl.start()
+
+    def test_max_lines4(self):
+        tasklist = []
+
+        def send(subject, text, html_message):
+            tasklist[0]._stop(check_subprocesses=False)
+            self.assertEqual(len(text.splitlines()), 25)
+
+        tl = TaskList(
+            Task(
+                'test4', ('tests/task_script.py',), '*', run_on_start=True,
+                mail_success=send,
+                max_lines=((2, None), None),
+            )
+        )
+
+        tasklist.append(tl)
+        tl.start()
+
+    def test_max_lines5(self):
+        tasklist = []
+
+        def send(subject, text, html_message):
+            tasklist[0]._stop(check_subprocesses=False)
+            self.assertEqual(len(text.splitlines()), 15)
+
+        tl = TaskList(
+            Task(
+                'test5', ('tests/task_script.py', 'x'), '*', run_on_start=True,
+                mail_success=send,
+                max_lines=((0, 1), 2),
+            )
+        )
+
+        tasklist.append(tl)
+        tl.start()

@@ -49,10 +49,24 @@ class Task:
     :param number wait_timeout: After sending **stop_signal** to the task
       process, we wait this many seconds for the process to stop. If the
       timeout expires, we kill the process.
-    :param int max_lines: STDOUT and STDERR are collected from the task
+    :param int/tuple max_lines: STDOUT and STDERR are collected from the task
       process. To avoid haevy memory usage we only store this many lines in
       memory. More precisely STDOUT head and tail, STDERR head and tail are
       list of lines. This parameter controls the maximum length of these lists.
+
+      examples:
+
+        ==================== ==== ==== ==== ====
+        parameter            stdout    stderr
+        -------------------- --------- ---------
+        value                head tail head tail
+        ==================== ==== ==== ==== ====
+        ``2``                2    2    2    2
+        ``(2, 3)``           2    2    3    3
+        ``(10, (2,3))``      10   10   2    3
+        ``((1, 2), (3, 4))`` 1    2    3    4
+        ==================== ==== ==== ==== ====
+
     :param int stop_signal: This signal will be sent to the task process when
       we want to stop it gracefully.
     :param int policy: Available values are ``periodtask.SKIP``,

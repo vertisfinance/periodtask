@@ -7,6 +7,32 @@ import logging
 logger = logging.getLogger('periodtask.process_thread')
 
 
+def _parse(head_tail):
+    if head_tail is None:
+        return None, None, None
+    if isinstance(head_tail, int):
+        return head_tail, head_tail, 2 * head_tail
+    try:
+        mx = head_tail[0] + head_tail[1]
+    except TypeError:
+        mx = None
+    return head_tail[0], head_tail[1], mx
+
+
+def parse_max_lines(max_lines):
+    if max_lines is None:
+        return None, None, None, None, None, None
+    if isinstance(max_lines, int):
+        return (
+            max_lines, max_lines, 2 * max_lines,
+            max_lines, max_lines, 2 * max_lines
+        )
+    (stdout_max_lines, stderr_max_lines) = max_lines
+    oh, ot, om = _parse(stdout_max_lines)
+    eh, et, em = _parse(stderr_max_lines)
+    return oh, ot, om, eh, et, em
+
+
 class ProcessThread(threading.Thread):
     def __init__(
         self, task_name, command, stop_signal, wait_timeout,
@@ -19,7 +45,16 @@ class ProcessThread(threading.Thread):
         self.stop_signal = stop_signal
         self.wait_timeout = wait_timeout
         self.formatted_sec = formatted_sec
-        self.max_lines = max_lines
+        self.max_lines = parse_max_lines(max_lines)
+        # try:
+        #     self.max_head = max_lines[0]
+        #     self.max_tail = max_lines[1]
+        # except TypeError:
+        #     self.max_head = self.max_tail = max_lines
+        # try:
+        #     self.max_lines = self.max_head + self.max_tail
+        # except TypeError:
+        #     self.max_lines = None
         self.stdout_logger = stdout_logger
         self.stdout_level = stdout_level or logging.INFO
         self.stderr_logger = stderr_logger
@@ -55,30 +90,24 @@ class ProcessThread(threading.Thread):
     def stderr_lines(self):
         return self.lines(self.stderr_head, self.stderr_tail)
 
-    def read_descriptor(self, desc, head, tail, logger, level):
+    def read_descriptor(self, desc, head, tail, logger, level, h, t, m):
         data = desc.readline()
         if not data:
             return False
-        else:
-            data = data.rstrip('\r\n')
-            if logger:
-                logger.log(level, data)
-            with self.lock:
-                if self.max_lines is None:
-                    head.append(data)
-                elif self.max_lines == 0:
-                    return True
-                else:
-                    if tail:
-                        tail.append(data)
-                        if len(tail) > self.max_lines:
-                            tail.pop(0)
-                    else:
-                        head.append(data)
-                        if len(head) > 2 * self.max_lines:
-                            tail.extend(head[-self.max_lines:])
-                            del head[self.max_lines:]
-            return True
+        data = data.rstrip('\r\n')
+        if logger:
+            logger.log(level, data)
+        with self.lock:
+            if tail:
+                tail.append(data)
+                if t is not None:
+                    tail.pop(0)
+                return True
+            head.append(data)
+            if m is not None and len(head) > m:
+                tail.extend(head[-t:])
+                del head[h:]
+        return True
 
     def run(self):
         proc = self.proc = Popen(
@@ -86,7 +115,7 @@ class ProcessThread(threading.Thread):
             stdin=PIPE,
             stdout=PIPE,
             stderr=PIPE,
-            # encoding='utf-8',  # This only works 3.6 and above
+            # encoding='utf-8',  # This only works on 3.6 and above
             universal_newlines=True,
             start_new_session=True,
             bufsize=1,
@@ -100,13 +129,15 @@ class ProcessThread(threading.Thread):
                 stdout_live = self.read_descriptor(
                     proc.stdout,
                     self.stdout_head, self.stdout_tail,
-                    self.stdout_logger, self.stdout_level
+                    self.stdout_logger, self.stdout_level,
+                    self.max_lines[0], self.max_lines[1], self.max_lines[2]
                 )
             if proc.stderr in r:
                 stderr_live = self.read_descriptor(
                     proc.stderr,
                     self.stderr_head, self.stderr_tail,
                     self.stderr_logger, self.stderr_level,
+                    self.max_lines[3], self.max_lines[4], self.max_lines[5]
                 )
 
         proc.wait()
