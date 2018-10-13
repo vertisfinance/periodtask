@@ -106,7 +106,7 @@ class ProcessThread(threading.Thread):
                 stderr_live = self.read_descriptor(
                     proc.stderr,
                     self.stderr_head, self.stderr_tail,
-                    self.stdout_logger, self.stdout_level
+                    self.stderr_logger, self.stderr_level,
                 )
 
         proc.wait()
