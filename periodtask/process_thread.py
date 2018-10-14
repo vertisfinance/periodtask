@@ -46,15 +46,6 @@ class ProcessThread(threading.Thread):
         self.wait_timeout = wait_timeout
         self.formatted_sec = formatted_sec
         self.max_lines = parse_max_lines(max_lines)
-        # try:
-        #     self.max_head = max_lines[0]
-        #     self.max_tail = max_lines[1]
-        # except TypeError:
-        #     self.max_head = self.max_tail = max_lines
-        # try:
-        #     self.max_lines = self.max_head + self.max_tail
-        # except TypeError:
-        #     self.max_lines = None
         self.stdout_logger = stdout_logger
         self.stdout_level = stdout_level or logging.INFO
         self.stderr_logger = stderr_logger
@@ -105,7 +96,8 @@ class ProcessThread(threading.Thread):
                 return True
             head.append(data)
             if m is not None and len(head) > m:
-                tail.extend(head[-t:])
+                if t != 0:
+                    tail.extend(head[-t:])
                 del head[h:]
         return True
 
