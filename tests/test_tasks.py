@@ -18,7 +18,7 @@ class TaskTest(unittest.TestCase):
 
         def send(subject, text, html_message):
             tasklist[0]._stop(check_subprocesses=False)
-            self.assertEqual(len(text.splitlines()), 106)
+            self.assertEqual(len(text.splitlines()), 105)
 
         tl = TaskList(
             Task(
@@ -35,7 +35,7 @@ class TaskTest(unittest.TestCase):
 
         def send(subject, text, html_message):
             tasklist[0]._stop(check_subprocesses=False)
-            self.assertEqual(len(text.splitlines()), 10)
+            self.assertEqual(len(text.splitlines()), 9)
 
         tl = TaskList(
             Task(
@@ -106,7 +106,7 @@ class TaskTest(unittest.TestCase):
 
         def send(subject, text, html_message):
             tasklist[0]._stop(check_subprocesses=False)
-            self.assertEqual(len(text.splitlines()), 17)
+            self.assertEqual(len(text.splitlines()), 16)
 
         tl = TaskList(
             Task(
@@ -124,7 +124,7 @@ class TaskTest(unittest.TestCase):
 
         def send(subject, text, html_message):
             tasklist[0]._stop(check_subprocesses=False)
-            self.assertEqual(len(text.splitlines()), 25)
+            self.assertEqual(len(text.splitlines()), 24)
 
         tl = TaskList(
             Task(
@@ -142,7 +142,7 @@ class TaskTest(unittest.TestCase):
 
         def send(subject, text, html_message):
             tasklist[0]._stop(check_subprocesses=False)
-            self.assertEqual(len(text.splitlines()), 25)
+            self.assertEqual(len(text.splitlines()), 24)
 
         tl = TaskList(
             Task(
@@ -164,11 +164,39 @@ class TaskTest(unittest.TestCase):
 
         tl = TaskList(
             Task(
-                'test5', ('tests/task_script.py', 'x'), '*', run_on_start=True,
+                'test5', ('tests/task_script.py', 'e'), '*', run_on_start=True,
                 mail_success=send,
                 max_lines=((0, 1), 2),
             )
         )
 
+        tasklist.append(tl)
+        tl.start()
+
+    def test_multi_fail(self):
+        tasklist = []
+        messages = {'COMPLETED': 0, 'FAILURE': 0}
+
+        def send(subject, text, html_message):
+            if subject.find('COMPLETED') >= 0:
+                messages['COMPLETED'] += 1
+            elif subject.find('FAILURE') >= 0:
+                messages['FAILURE'] += 1
+            else:
+                raise Exception('Should not be here...')
+            if messages['COMPLETED'] == 1:
+                self.assertEqual(messages['FAILURE'], 1)
+                tasklist[0]._stop(check_subprocesses=False)
+
+        tl = TaskList(
+            Task(
+                'test_multi_fail',
+                ('tests/errsuccess.py', 'test_multi_fail.db', '5'),
+                '* *',
+                mail_failure=send,
+                mail_success=send,
+                max_lines=0
+            )
+        )
         tasklist.append(tl)
         tl.start()

@@ -100,6 +100,9 @@ class Task:
       email will be sent. When the blocking process terminates, an extra
       email will be sent using the ``mail_skipped`` or ``mail_delayed``
       functions.
+    :param bool failure_email_limitation: To disable consecutive failure
+      emails this param should be set to ``True``. If left ``None``, the
+      value of this param is derived from ``email_limitation``.
     """
     def __init__(
         self, name, command,
@@ -120,7 +123,8 @@ class Task:
         stderr_logger=logging.getLogger('periodtask.stderr'),
         stderr_level=logging.INFO,
         cwd=None,
-        email_limitation=True
+        email_limitation=True,
+        failure_email_limitation=None
     ):
         if not isinstance(periods, list) and not isinstance(periods, tuple):
             periods = [periods]
@@ -161,11 +165,15 @@ class Task:
         self.stderr_level = stderr_level
         self.cwd = cwd
         self.email_limitation = email_limitation
+        self.failure_email_limitation = failure_email_limitation
+        if self.failure_email_limitation is None:
+            self.failure_email_limitation = self.email_limitation
 
         self.process_threads = []
         self.first_check = True
         self.delay_queue = []
         self.email_limitation_active = False
+        self.fail_mail_sent = False
 
     def check_second(self, sec):
         if self.first_check:
@@ -227,6 +235,7 @@ class Task:
 
             if retcode == 0:
                 if self.mail_success:
+                    self.fail_mail_sent = False
                     self.send_mail_template(
                         self.mail_success,
                         'success_subject.txt',
@@ -236,13 +245,18 @@ class Task:
                     )
             else:
                 if self.mail_failure:
-                    self.send_mail_template(
-                        self.mail_failure,
-                        'failure_subject.txt',
-                        'failure.txt',
-                        'failure.html',
-                        subproc=subproc
-                    )
+                    if (
+                        not self.failure_email_limitation or
+                        not self.fail_mail_sent
+                    ):
+                        self.fail_mail_sent = True
+                        self.send_mail_template(
+                            self.mail_failure,
+                            'failure_subject.txt',
+                            'failure.txt',
+                            'failure.html',
+                            subproc=subproc
+                        )
 
             # If we have sent out a skipped or delayed email, we have to
             # send an ok email here
