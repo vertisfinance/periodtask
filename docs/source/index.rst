@@ -27,9 +27,14 @@ Topics
 Release Notes
 =============
 
+0.6.0
+-----
+- Improved handling of ``max_lines``.
+- Added task param ``failure_email_limitation``.
+
 0.5.5
 -----
-- Improved wording of buildtin e-mail templates.
+- Improved wording of builtin e-mail templates.
 - Added the ``email_limitation`` parameter to ``Task``.
 
 0.5.3
