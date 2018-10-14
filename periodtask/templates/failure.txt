@@ -1,12 +1,12 @@
 The command ${' '.join(subproc.command) | n} has returned with code ${subproc.returncode | n,str}.
-
 % if subproc.stdout_lines:
+
 STDOUT
 ------
 ${subproc.stdout_lines | n}
 % endif
-
 % if subproc.stderr_lines:
+
 STDERR
 ------
 ${subproc.stderr_lines | n}
