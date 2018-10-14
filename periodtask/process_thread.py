@@ -73,6 +73,22 @@ class ProcessThread(threading.Thread):
             else:
                 return '\n'.join(head)
 
+    def get_stdout_head(self):
+        with self.lock:
+            return [x for x in self.stdout_head]
+
+    def get_stdout_tail(self):
+        with self.lock:
+            return [x for x in self.stdout_tail]
+
+    def get_stderr_head(self):
+        with self.lock:
+            return [x for x in self.stderr_head]
+
+    def get_stderr_tail(self):
+        with self.lock:
+            return [x for x in self.stderr_tail]
+
     @property
     def stdout_lines(self):
         return self.lines(self.stdout_head, self.stdout_tail)
