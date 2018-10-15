@@ -1,1 +1,0 @@
-${subproc.task_name | n} EXITED - started for: ${subproc.formatted_sec | n}

@@ -96,13 +96,13 @@ class Task:
     :param str cwd: The task process will run with ``cwd`` as the working
       directory. See the `Popen constructor
       <https://docs.python.org/3/library/subprocess.html#subprocess.Popen>`_.
-    :param bool email_limitation: If ``True``, only one ``skip`` or ``delay``
-      email will be sent. When the blocking process terminates, an extra
-      email will be sent using the ``mail_skipped`` or ``mail_delayed``
-      functions.
-    :param bool failure_email_limitation: To disable consecutive failure
-      emails this param should be set to ``True``. If left ``None``, the
-      value of this param is derived from ``email_limitation``.
+    :param int/None skip_delayed_email_threshold: In havaria situations
+      instead of sending SKIP or DELAYED emails forever, only this much
+      consecutive emails will be send. When the send queue becomes empty
+      a NO BLOCK email will be sent. ``None`` means no threshold.
+    :param int/None failure_email_threshold: When a task fails more than
+      this in a row no new FAILURE email will be sent. When the task runs
+      successfully a RECOVER email will be sent. ``None`` means no threshold.
     """
     def __init__(
         self, name, command,
@@ -123,12 +123,11 @@ class Task:
         stderr_logger=logging.getLogger('periodtask.stderr'),
         stderr_level=logging.INFO,
         cwd=None,
-        email_limitation=True,
-        failure_email_limitation=None
+        skip_delayed_email_threshold=5,
+        failure_email_threshold=5
     ):
         if not isinstance(periods, list) and not isinstance(periods, tuple):
             periods = [periods]
-        # self.periods = [parse_period(x) for x in periods]
         self.periods = [Period(x) for x in periods]
 
         self.name = name
@@ -164,16 +163,15 @@ class Task:
         self.stderr_logger = stderr_logger
         self.stderr_level = stderr_level
         self.cwd = cwd
-        self.email_limitation = email_limitation
-        self.failure_email_limitation = failure_email_limitation
-        if self.failure_email_limitation is None:
-            self.failure_email_limitation = self.email_limitation
+        self.skip_delayed_email_threshold = skip_delayed_email_threshold
+        self.failure_email_threshold = failure_email_threshold
 
         self.process_threads = []
         self.first_check = True
         self.delay_queue = []
-        self.email_limitation_active = False
-        self.fail_mail_sent = False
+        # self.email_limitation_active = False
+        self.failure_email_sent = 0
+        self.skip_delayed_email_sent = 0
 
     def check_second(self, sec):
         if self.first_check:
@@ -235,7 +233,6 @@ class Task:
 
             if retcode == 0:
                 if self.mail_success:
-                    self.fail_mail_sent = False
                     self.send_mail_template(
                         self.mail_success,
                         'success_subject.txt',
@@ -243,39 +240,36 @@ class Task:
                         'success.html',
                         subproc=subproc
                     )
+                if (
+                    self.mail_failure and
+                    self.failure_email_threshold is not None and
+                    self.failure_email_sent >= self.failure_email_threshold
+                ):
+                    self.send_mail_template(
+                        self.mail_failure,
+                        'recover_subject.txt',
+                        'recover.txt',
+                        'recover.html',
+                        task=self,
+                        subproc=subproc
+                    )
+                self.failure_email_sent = 0
             else:
-                if self.mail_failure:
-                    if (
-                        not self.failure_email_limitation or
-                        not self.fail_mail_sent
-                    ):
-                        self.fail_mail_sent = True
-                        self.send_mail_template(
-                            self.mail_failure,
-                            'failure_subject.txt',
-                            'failure.txt',
-                            'failure.html',
-                            subproc=subproc
-                        )
-
-            # If we have sent out a skipped or delayed email, we have to
-            # send an ok email here
-            func = None
-            if self.email_limitation_active:
-                self.email_limitation_active = False
-                if self.policy == SKIP:
-                    func = self.mail_skipped
-                elif self.policy == DELAY:
-                    func = self.mail_delayed
-
-            if func:
-                self.send_mail_template(
-                    func,
-                    'ok_subject.txt',
-                    'ok.txt',
-                    'ok.html',
-                    subproc=subproc
-                )
+                if (
+                    self.mail_failure and (
+                        self.failure_email_threshold is None or
+                        self.failure_email_sent <
+                        self.failure_email_threshold
+                    )
+                ):
+                    self.failure_email_sent += 1
+                    self.send_mail_template(
+                        self.mail_failure,
+                        'failure_subject.txt',
+                        'failure.txt',
+                        'failure.html',
+                        subproc=subproc
+                    )
 
         self.process_threads = new_process_threads
 
@@ -301,35 +295,62 @@ class Task:
             if self.policy == SKIP:
                 if not formatted_sec:
                     return
-
+                self.delay_queue.pop()  # we skip it
                 msg = 'task %s %s for %s' % (
                     self.name, 'skipped', formatted_sec
                 )
                 logger.warning(msg)
 
-                if not self.email_limitation_active:
+                # do we need to send a skip e-mail?
+                if (
+                    self.skip_delayed_email_threshold is None or
+                    self.skip_delayed_email_sent <
+                    self.skip_delayed_email_threshold
+                ):
                     self.skipped_or_delayed(formatted_sec)
-                    self.delay_queue.pop(0)
-                    if self.email_limitation:
-                        self.email_limitation_active = True
+                    self.skip_delayed_email_sent += 1
                 return
+
             elif self.policy == DELAY:
                 if not formatted_sec:
                     return
-
                 msg = 'task %s %s for %s' % (
                     self.name, 'delayed', formatted_sec
                 )
                 logger.warning(msg)
 
-                if not self.email_limitation_active:
+                # do we need to send a delayed e-mail?
+                if (
+                    self.skip_delayed_email_threshold is None or
+                    self.skip_delayed_email_sent <
+                    self.skip_delayed_email_threshold
+                ):
                     self.skipped_or_delayed(formatted_sec, typ='delayed')
-                    if self.email_limitation:
-                        self.email_limitation_active = True
+                    self.skip_delayed_email_sent += 1
                 return
 
         if self.delay_queue:
             self.start_process_thread(self.delay_queue.pop(0))
+            if (
+                not self.delay_queue and
+                self.skip_delayed_email_threshold is not None and
+                self.skip_delayed_email_sent >=
+                self.skip_delayed_email_threshold
+            ):
+                func = None
+                if self.policy == SKIP:
+                    func = self.mail_skipped
+                elif self.policy == DELAY:
+                    func = self.mail_delayed
+                if func:
+                    self.send_mail_template(
+                        func,
+                        'noblock_subject.txt',
+                        'noblock.txt',
+                        'noblock.html',
+                        task=self
+                    )
+            self.skip_delayed_email_sent = 0
             return True
 
     def stop(self, check_subprocesses=True):

@@ -1,1 +1,3 @@
+${task.name | n} has recovered from failure.
+
 The command `${' '.join(subproc.command) | n}` has returned with code ${subproc.returncode | n,str}.

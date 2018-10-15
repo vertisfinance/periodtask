@@ -1,0 +1,9 @@
+${task.name | n} is not blocked any more.
+% if task.process_threads:
+
+Running processes:
+
+% for subproc in task.process_threads:
+Started for: ${subproc.formatted_sec | n}
+% endfor
+% endif

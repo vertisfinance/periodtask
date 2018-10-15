@@ -3,9 +3,11 @@
   <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-    <title>${subproc.task_name} EXITED - ${subproc.formatted_sec}</title>
+    <title>${task.name | n} has recovered from failure</title>
   </head>
   <body>
+    ${task.name | n} has recovered from failure.
+    <br/>
     The command <code style="background-color: #f0f0f0">${' '.join(subproc.command)}</code> has returned with code ${subproc.returncode}.
   </body>
 </html>

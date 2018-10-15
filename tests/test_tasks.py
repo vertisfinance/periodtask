@@ -7,7 +7,7 @@ from periodtask import Task, TaskList
 class TaskTest(unittest.TestCase):
     def test_simple_task(self):
         task = Task(
-            'test1', ('ls',), '* * * * * -1526',
+            'test_simple_task', ('ls',), '* * * * * -1526',
             run_on_start=False
         )
         task.check_for_second(ts('2018-07-10 10:15:00'))
@@ -22,7 +22,8 @@ class TaskTest(unittest.TestCase):
 
         tl = TaskList(
             Task(
-                'test2', ('seq', '100', '200'), '*', run_on_start=True,
+                'test_send_success',
+                ('seq', '100', '200'), '*', run_on_start=True,
                 mail_success=send
             )
         )
@@ -39,7 +40,8 @@ class TaskTest(unittest.TestCase):
 
         tl = TaskList(
             Task(
-                'test3', ('tests/task_script.py',), '*', run_on_start=True,
+                'test_max_lines',
+                ('tests/task_script.py',), '*', run_on_start=True,
                 mail_success=send,
                 max_lines=2,
             )
@@ -48,27 +50,27 @@ class TaskTest(unittest.TestCase):
         tasklist.append(tl)
         tl.start()
 
-    def test_skip_ok_mail_limitation(self):
+    def test_skip_noblock_mail_limitation(self):
         tasklist = []
-        messages = {'skipped': 0, 'ok': 0}
+        messages = {'SKIPPED': 0, 'NOT BLOCKED': 0}
 
         def send(subject, text, html_message):
             if subject.find('SKIPPED') >= 0:
-                messages['skipped'] += 1
-            elif subject.find('EXITED') >= 0:
-                messages['ok'] += 1
+                messages['SKIPPED'] += 1
+            elif subject.find('NOT BLOCKED') >= 0:
+                messages['NOT BLOCKED'] += 1
 
-            if messages['ok'] == 1:
-                self.assertEqual(messages['skipped'], 1)
+            if messages['NOT BLOCKED'] == 1:
+                self.assertEqual(messages['SKIPPED'], 2)
                 tasklist[0]._stop(check_subprocesses=False)
 
         tl = TaskList(
             Task(
-                'test4',
+                'test_skip_noblock_mail_limitation',
                 ('tests/longtask.py',),
                 '* *',
                 mail_skipped=send,
-                # email_limitation=False
+                skip_delayed_email_threshold=2
             )
         )
         tasklist.append(tl)
@@ -90,11 +92,11 @@ class TaskTest(unittest.TestCase):
 
         tl = TaskList(
             Task(
-                'test5',
+                'test_skip_mail_no_limitation',
                 ('tests/longtask.py',),
                 '* *',
                 mail_skipped=send,
-                email_limitation=False
+                skip_delayed_email_threshold=None
             )
         )
         tasklist.append(tl)
@@ -110,7 +112,8 @@ class TaskTest(unittest.TestCase):
 
         tl = TaskList(
             Task(
-                'test2', ('tests/task_script.py',), '*', run_on_start=True,
+                'test_max_lines2',
+                ('tests/task_script.py',), '*', run_on_start=True,
                 mail_success=send,
                 max_lines=((1, 10), None),
             )
@@ -128,7 +131,8 @@ class TaskTest(unittest.TestCase):
 
         tl = TaskList(
             Task(
-                'test3', ('tests/task_script.py',), '*', run_on_start=True,
+                'test_max_lines3',
+                ('tests/task_script.py',), '*', run_on_start=True,
                 mail_success=send,
                 max_lines=((None, 2), None),
             )
@@ -146,7 +150,8 @@ class TaskTest(unittest.TestCase):
 
         tl = TaskList(
             Task(
-                'test4', ('tests/task_script.py',), '*', run_on_start=True,
+                'test_max_lines4',
+                ('tests/task_script.py',), '*', run_on_start=True,
                 mail_success=send,
                 max_lines=((2, None), None),
             )
@@ -164,7 +169,8 @@ class TaskTest(unittest.TestCase):
 
         tl = TaskList(
             Task(
-                'test5', ('tests/task_script.py', 'e'), '*', run_on_start=True,
+                'test_max_lines5',
+                ('tests/task_script.py', 'e'), '*', run_on_start=True,
                 mail_success=send,
                 max_lines=((0, 1), 2),
             )
@@ -175,17 +181,20 @@ class TaskTest(unittest.TestCase):
 
     def test_multi_fail(self):
         tasklist = []
-        messages = {'COMPLETED': 0, 'FAILURE': 0}
+        messages = {'COMPLETED': 0, 'FAILURE': 0, 'RECOVERED': 0}
 
         def send(subject, text, html_message):
             if subject.find('COMPLETED') >= 0:
                 messages['COMPLETED'] += 1
             elif subject.find('FAILURE') >= 0:
                 messages['FAILURE'] += 1
+            elif subject.find('RECOVERED') >= 0:
+                messages['RECOVERED'] += 1
             else:
-                raise Exception('Should not be here...')
-            if messages['COMPLETED'] == 1:
+                raise Exception('Should not be here... %s' % subject)
+            if messages['COMPLETED'] > 0 and messages['RECOVERED'] > 0:
                 self.assertEqual(messages['FAILURE'], 1)
+                self.assertEqual(messages['RECOVERED'], 1)
                 tasklist[0]._stop(check_subprocesses=False)
 
         tl = TaskList(
@@ -195,7 +204,8 @@ class TaskTest(unittest.TestCase):
                 '* *',
                 mail_failure=send,
                 mail_success=send,
-                max_lines=0
+                max_lines=0,
+                failure_email_threshold=1
             )
         )
         tasklist.append(tl)
