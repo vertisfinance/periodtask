@@ -16,7 +16,7 @@ build:
 
 .PHONY: test
 test:
-	@docker-compose run --rm -u $(usr) periodtask coverage run --source periodtask -m unittest
+	@docker-compose run --rm -u $(usr) periodtask coverage run --source periodtask -m unittest -f
 	@docker-compose run --rm -u $(usr) periodtask coverage report
 	@docker-compose run --rm -u $(usr) periodtask coverage html
 
