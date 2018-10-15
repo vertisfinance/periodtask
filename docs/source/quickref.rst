@@ -56,7 +56,8 @@ Quick reference
           stderr_logger=stderr_logger,
           stderr_level=logging.WARNING,  # send STDERR logs to this level
           cwd=None,  # run the command in this directory (None to keep current)
-          email_limitation=True  # send only one skipped or delayed message
+          skip_delayed_email_threshold=3,  # send only 3 skip mail in a row
+          failure_email_threshold=5  # irrelevant here (no failure mail)
       ),
       Task(  # you can specify more than one task
           'catter', ('cat', 'README.rst'), '5 20,40 7-19 MON-FRI *',
