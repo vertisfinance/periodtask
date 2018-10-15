@@ -27,6 +27,11 @@ Topics
 Release Notes
 =============
 
+0.7.0
+-----
+- Former ``email_limitation`` is changed to email thresholds. This is a
+  breaking change!
+
 0.6.0
 -----
 - Improved handling of ``max_lines``.
