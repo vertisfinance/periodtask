@@ -27,6 +27,10 @@ Topics
 Release Notes
 =============
 
+0.8.0
+-----
+- Support 3.8.10 python
+
 0.7.0
 -----
 - Former ``email_limitation`` is changed to email thresholds. This is a
