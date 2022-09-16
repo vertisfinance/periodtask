@@ -24,7 +24,7 @@ setup(
     ],
     install_requires=[
         'pytz >= 2021.1',
-        'mako == 1.1.4',
+        'mako == 1.2.2',
     ],
     license='MIT',
     packages=['periodtask'],
